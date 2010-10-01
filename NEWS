@@ -1,0 +1,2 @@
+0.9 Checks for ImageMagick, Djvu Libre and minidjvu (with -m option) added
+0.9a Checks for existence of folder and for subfolders added, better README

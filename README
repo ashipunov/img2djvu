@@ -1,1 +1,43 @@
 This is a single-pass DjVu encoder based on DjVu Libre, minidjvu and ImageMagick.
+
+===
+
+Examples ("images" is a folder which contains several TIFF files):
+
+img2djvu -d 600 images
+
+Will change default resolution (300 dpi) to 600 dpi
+
+> img2djvu -t 17 images
+
+Among color files, only files with color count < 17 will be sent to cpaldjvu DjVu coder
+
+> img2djvu -t 0 images
+
+Will skip ImageMagick color count (this is much faster!) and send all color files to c44 DjVu coder; cpaldjvu will not run
+
+> img2djvu -m 10 images
+
+For black and white pages, will employ minidjvu DjVu coder (with 10 pages per dictionary) instead of default cjb2 coder
+
+> img2djvu -l 1 images
+
+For color pages, will do layer separation (assuming that the file is the result of Scan Tailor mixed mode output), then blur color part and start forced segmentation; it is slow but usually produce compact output.
+Scan Tailor: http://scantailor.sourceforge.net/
+Layer separation after Scan Tailor: http://forum.ru-board.com/topic.cgi?forum=5&topic=32945 (in Russian)
+Forced segmentation: http://djvu-soft.narod.ru/scan/back_glue.htm (in Russian)
+
+> img2djvu -a 2 -m 20 -l 1 images
+
+Will produce most compact output; however, check the result carefully---artifacts could appear!
+
+===
+
+Caveats
+
+Image folder should not contain any non-graphic files (unreadable by ImageMagick)!
+
+Image names are very important; they determine the page sequence in future DjVu file. I strongly recommend to re-name files sequentially (with console "mmv" or "rename", or with GUI renamers).
+
+It is not expected that forced segmentation will harm non-Scan Tailor files; moreover, its output should be smaller than c44 output even for "common" color files
+
