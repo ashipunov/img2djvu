@@ -1,6 +1,6 @@
 #!/bin/bash
 
-### Version 0.8
+### Version 0.9
 ### Inspired by script pdf-trim-to-djvu.sh (http://gist.github.com/315791)
 
 ### Settings
@@ -22,17 +22,15 @@ function usage() {
   me=`basename "$prog"`
   cat << END
 Usage: $me [options] folder_name
+folder_name should contain only graphic files acceptable by ImageMagick
 
 Options:
- -a <0|1|2> agressivity: 0 not agressive, 1 agressive, 2 very agressive [default: $agdefault]
+ -a <0|1|2> agressivity: 0 is not agressive, 1 is agressive, 2 is very agressive [default: $agdefault]
  -d <int>   resolution in DPI [default: $dpidefault]
- -l <0|1>   use forced segmentation designed for Scan Tailor mixed output [default: $codjvudefault]
- -m <int>   use minidjvu instead of cjb2, parameter is the size of dictionary, 0 is no minidjvu [default: $midefault]
- -t <int>   treshold, all images with lower number of colors are "few"-color images [default: $trdefault]
+ -l <0|1>   if not 0, will use forced segmentation [default: $codefault]
+ -m <int>   if not 0, will use minidjvu (with <int> dictionary size) instead of cjb2 [default: $midefault]
+ -t <int>   if not 0, will use cpaldjvu for all images with number of colors less than <int> [default: $trdefault]
  -h|--help  print this message
-
-Only graphic files should present in a folder! Subfolders are not allowed.
-It is recommended to re-number all graphic files before start.
 
 END
 }
@@ -51,16 +49,37 @@ while true ; do
 done
 
 if [ $# -ne 1 ] ; then
-  printf "Folder name is required.\n"
+  printf "\nFolder name is required.\n\n"
   usage
   exit 1
 fi
 
-# absolute paths to input folder and output DjVu files
-fld="`pwd`/$1"
-djvu="`pwd`/$1.djvu"
+### Checks
+if ! which identify >/dev/null ; then
+   printf "\nImageMagick should be installed.\n\n"
+   usage
+   exit 1
+fi
 
-tmpdir=`mktemp -d /tmp/pagesXXXXX`
+if ! which cpaldjvu >/dev/null ; then
+   printf "\nDjVu Libre should be installed.\n\n"
+   usage
+   exit 1
+fi
+
+if [ ! -d $1 ] ; then
+   printf "\n$1 is not a folder.\n\n"
+   usage
+   exit 1
+fi
+
+for f in $1/* ; do
+if [ -d $f ] ; then
+   printf "\nImage folder should not contain any subfolders.\n\n"
+   usage
+   exit 1
+fi
+done
 
 ### Agressivity options
 case "$ag" in
@@ -92,10 +111,10 @@ case "$ag" in
       bluropt="-blur 0x2 -contrast"
    ;;
    *)
-   printf "Agressivity has only three possible values: 0, 1, or 2"
+   printf "\nAgressivity has only three possible values: 0, 1, or 2.\n\n"
+   usage
    exit 1
 esac
-
 
 ### Coders functions
 function c44coder {
@@ -103,6 +122,7 @@ function c44coder {
    printf "C"
 }
 
+# This function does not print because it is called also from inside codjvucoder
 function cjb2coder {
    cjb2 $cjb2opt -dpi $DPI $1 $2
 }
@@ -118,6 +138,7 @@ function minidjvucoder {
    printf "$bwcount""$age"
 }
 
+### Forced segmentation coder
 function codjvucoder {
    # folders
    printf "L"
@@ -151,7 +172,16 @@ function codjvucoder {
    rm -rf $tmcdir
 }
 
-### Main part
+### Color coder choice
+function colorcoder {
+if [ $usecodjvu -lt 1 ] ; then
+   c44coder $1 $2
+else
+   codjvucoder $1 $2
+fi
+}
+
+### General coder and bundler
 # convert all pages to pnm: convert
 # determine color depth of each page
 # if depth <= 1, compress with cjb2 or minidjvu
@@ -189,7 +219,7 @@ function nomini {
     done
   ) &&
   cd $tmpdir && \
-  djvm -c "$djvu" *.djvu
+  djvm -c "$djvu" *.djvu && \
   printf "\nDone.\n"
 ) && rm -rf "$tmpdir" || (
   printf "Failure\nTemporary directory left: %s\n" $tmpdir
@@ -197,6 +227,8 @@ function nomini {
 )
 }
 
+### Minidjvu-based coder and bundler
+# Similar to previous, but instead of cjb2 minidjvu called every time when black and white sequence interrupted with color image, or when sequence ends on black and white file
 function mini {
 ( cd $fld &&
   ( bwcount=0 && \
@@ -236,7 +268,7 @@ function mini {
     done
   ) &&
   cd $tmpdir && \
-  djvm -c "$djvu" *.djvu
+  djvm -c "$djvu" *.djvu && \
   printf "\nDone.\n"
 ) && rm -rf "$tmpdir" || (
   printf "Failure\nTemporary directory left: %s\n" $tmpdir
@@ -244,17 +276,20 @@ function mini {
 )
 }
 
-### Coder choices
-function colorcoder {
-if [ $usecodjvu -lt 1 ] ; then
-   c44coder $1 $2
-else
-   codjvucoder $1 $2
-fi
-}
+# Absolute paths to input folder and output DjVu files
+fld="`pwd`/$1"
+djvu="`pwd`/$1.djvu"
 
+### START!
 if [ $usemini -lt 1 ] ; then
+   tmpdir=`mktemp -d /tmp/pagesXXXXX`
    nomini
 else
+   if ! which minidjvu >/dev/null ; then
+      printf "\nFor -m option, minidjvu is required.\n\n"
+      usage
+      exit 1
+   fi
+   tmpdir=`mktemp -d /tmp/pagesXXXXX`
    mini
 fi
