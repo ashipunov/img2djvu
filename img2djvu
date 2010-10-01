@@ -1,0 +1,260 @@
+#!/bin/bash
+
+### Version 0.8
+### Inspired by script pdf-trim-to-djvu.sh (http://gist.github.com/315791)
+
+### Settings
+# default
+DPI=300
+treshold=129
+usemini=0
+usecodjvu=0
+ag=0
+# internal
+prog=$0
+dpidefault=$DPI
+trdefault=$treshold
+midefault=$usemini
+codefault=$usecodjvu
+agdefault=$ag
+
+function usage() {
+  me=`basename "$prog"`
+  cat << END
+Usage: $me [options] folder_name
+
+Options:
+ -a <0|1|2> agressivity: 0 not agressive, 1 agressive, 2 very agressive [default: $agdefault]
+ -d <int>   resolution in DPI [default: $dpidefault]
+ -l <0|1>   use forced segmentation designed for Scan Tailor mixed output [default: $codjvudefault]
+ -m <int>   use minidjvu instead of cjb2, parameter is the size of dictionary, 0 is no minidjvu [default: $midefault]
+ -t <int>   treshold, all images with lower number of colors are "few"-color images [default: $trdefault]
+ -h|--help  print this message
+
+Only graphic files should present in a folder! Subfolders are not allowed.
+It is recommended to re-number all graphic files before start.
+
+END
+}
+
+opts=`getopt -l "help" "a:h:f:l:m:t:d:" "$@"` && eval set -- "$opts"
+while true ; do
+  case "$1" in
+    -h|--help) usage ; exit 0 ;;
+    -a) ag=$2 ; shift 2 ;;
+    -d) DPI=$2 ; shift 2 ;;
+    -l) usecodjvu=$2 ; shift 2 ;;
+    -m) usemini=$2 ; shift 2 ;;
+    -t) treshold=$2 ; shift 2 ;;
+    --) shift ; break ;;
+  esac
+done
+
+if [ $# -ne 1 ] ; then
+  printf "Folder name is required.\n"
+  usage
+  exit 1
+fi
+
+# absolute paths to input folder and output DjVu files
+fld="`pwd`/$1"
+djvu="`pwd`/$1.djvu"
+
+tmpdir=`mktemp -d /tmp/pagesXXXXX`
+
+### Agressivity options
+case "$ag" in
+   0)
+      ags="<"
+      age=">"
+      c44opt=""
+      cjb2opt=""
+      cpaldjvuopt="-bgwhite"
+      minidjvuopt=""
+      bluropt="-blur 0x1 -contrast"
+   ;;
+   1)
+      ags="<<"
+      age=">>"
+      c44opt="-slice 74+13+10"
+      cjb2opt="-clean"
+      cpaldjvuopt=""
+      minidjvuopt="--clean"
+      bluropt="-blur 0x1.5 -contrast"
+   ;;
+   2)
+      ags="<<<"
+      age=">>>"
+      c44opt="-slice 76+15"
+      cjb2opt="-lossy"
+      cpaldjvuopt=""
+      minidjvuopt="--lossy"
+      bluropt="-blur 0x2 -contrast"
+   ;;
+   *)
+   printf "Agressivity has only three possible values: 0, 1, or 2"
+   exit 1
+esac
+
+
+### Coders functions
+function c44coder {
+   c44 $c44opt -dpi $DPI $1 $2
+   printf "C"
+}
+
+function cjb2coder {
+   cjb2 $cjb2opt -dpi $DPI $1 $2
+}
+
+function cpaldjvucoder {
+   cpaldjvu $cpaldjvuopt -dpi $DPI $1 $2
+   printf "F"
+}
+
+function minidjvucoder {
+   printf "$ags""M:"
+   minidjvu -d $DPI -p $usemini $minidjvuopt $@
+   printf "$bwcount""$age"
+}
+
+function codjvucoder {
+   # folders
+   printf "L"
+   tmcdir=$tmpdir/codjvu
+   mkdir $tmcdir
+   # image parameters
+   h=`identify -format %h $1`
+   w=`identify -format %w $1`
+   # separate layers from Scan Tailor
+   convert -threshold 1 -compress Group4 $1 $tmcdir/fore.pbm
+   composite -compose Add \( -negate $tmcdir/fore.pbm \) $1 $tmcdir/bback.ppm
+   cd $tmcdir
+   printf ":"
+   # make BG44 chunk
+   convert bback.ppm $bluropt back.ppm
+   c44 $c44opt back.ppm back.djvu
+   djvuextract back.djvu BG44=bg44.cnk >/dev/null 2>&1
+   printf "1"
+   # make Sjbz chunk
+   cjb2coder fore.pbm sjbz.djvu
+   djvuextract sjbz.djvu Sjbz=sjbz.cnk >/dev/null 2>&1
+   printf "+1"
+   # make FG44 chunk from background (!)
+   convert -size "$w"x"$h" -depth 8 xc:black fore.pgm
+   c44 -slice 120 fore.pgm fore.djvu
+   djvuextract fore.djvu BG44=fg44.cnk >/dev/null 2>&1
+   printf "+1"
+   # make compound DjVu
+   djvumake $2 Sjbz=sjbz.cnk FG44=fg44.cnk BG44=bg44.cnk
+   cd ..
+   rm -rf $tmcdir
+}
+
+### Main part
+# convert all pages to pnm: convert
+# determine color depth of each page
+# if depth <= 1, compress with cjb2 or minidjvu
+# if depth > 1 and treshold > 0, count number of unique colors
+# if unique colors < 129, compress with cpaldjvu
+# if unique colors >= 129, compress with c44 or codjvu
+# display progress symbols (B or M for Bitonal, C for TrueColor, L for codjvu layers, F for Palette)
+# create bundled DjVu file
+function nomini {
+( cd $fld &&
+  ( # for every page
+    for f in * ; do
+      printf "$ags" && \
+      of="$tmpdir/$f.pnm" && \
+      convert "$f" "$of" && \
+      ( # switch between formats
+        if [ `identify -format "%z" "$of"` -gt 1 ] ; then
+           if [ $treshold -gt 0 ] ; then
+              colors=`identify -format "%k" "$of"` && \
+              if [ $colors -lt $treshold ] ; then
+                 cpaldjvucoder "$of" "$of.djvu"
+              else
+                 colorcoder "$of" "$of.djvu"
+              fi
+          else
+              colorcoder "$of" "$of.djvu"
+          fi
+        else
+        cjb2coder "$of" "$of.djvu"
+        printf "B"
+        fi
+      ) && \
+      rm "$of" && \
+      printf "$age"
+    done
+  ) &&
+  cd $tmpdir && \
+  djvm -c "$djvu" *.djvu
+  printf "\nDone.\n"
+) && rm -rf "$tmpdir" || (
+  printf "Failure\nTemporary directory left: %s\n" $tmpdir
+  exit 2
+)
+}
+
+function mini {
+( cd $fld &&
+  ( bwcount=0 && \
+    pgcount=`ls -1 | wc -l` && \
+    bwpages="" && \
+    for f in * ; do
+      of="$tmpdir/$f.pnm" && \
+      convert "$fld/$f" "$of" && \
+        if [ `identify -format "%z" "$of"` -gt 1 ] ; then
+           if [ $bwcount -gt 0 ] ; then
+              minidjvucoder `echo $bwpages` "$of.1.djvu"
+              bwpages=""
+              bwcount=0
+           fi
+           printf "$ags"
+           if [ $treshold -gt 0 ] ; then
+              colors=`identify -format "%k" "$of"`
+              if [ $colors -lt $treshold ] ; then
+                 cpaldjvucoder "$of" "$of.2.djvu"
+              else
+                 colorcoder "$of" "$of.2.djvu"
+              fi
+           else
+              colorcoder "$of" "$of.2.djvu"
+           fi
+           printf "$age"
+        else
+           bwpages="$bwpages $of"
+           bwcount=$((bwcount+1))
+        fi
+           pgcount=$((pgcount-1))
+           if [[ $pgcount -eq 0 && $bwcount -gt 0 ]] ; then 
+              minidjvucoder `echo $bwpages` "$of.1.djvu"
+              bwpages=""
+              bwcount=0
+           fi
+    done
+  ) &&
+  cd $tmpdir && \
+  djvm -c "$djvu" *.djvu
+  printf "\nDone.\n"
+) && rm -rf "$tmpdir" || (
+  printf "Failure\nTemporary directory left: %s\n" $tmpdir
+  exit 2
+)
+}
+
+### Coder choices
+function colorcoder {
+if [ $usecodjvu -lt 1 ] ; then
+   c44coder $1 $2
+else
+   codjvucoder $1 $2
+fi
+}
+
+if [ $usemini -lt 1 ] ; then
+   nomini
+else
+   mini
+fi
