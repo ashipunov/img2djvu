@@ -1,7 +1,8 @@
 #!/bin/bash
 
-### Version 0.9
+### Version 0.9b
 ### Inspired by script pdf-trim-to-djvu.sh (http://gist.github.com/315791)
+### PUBLIC DOMAIN
 
 ### Settings
 # default
