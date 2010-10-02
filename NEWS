@@ -1,2 +1,7 @@
+0.9c minidjvu --agression 200 for -a 2; ignoring non-graphic files
+
+0.9b Functions cleanup
+
+0.9a Checks for existence of folder and subfolders added, better README
+
 0.9 Checks for ImageMagick, Djvu Libre and minidjvu (with -m option) added
-0.9a Checks for existence of folder and for subfolders added, better README

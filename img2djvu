@@ -1,6 +1,6 @@
 #!/bin/bash
 
-### Version 0.9b
+### Version 0.9c
 ### Inspired by script pdf-trim-to-djvu.sh (http://gist.github.com/315791)
 ### PUBLIC DOMAIN
 
@@ -23,10 +23,9 @@ function usage() {
   me=`basename "$prog"`
   cat << END
 Usage: $me [options] folder_name
-folder_name should contain only graphic files acceptable by ImageMagick
 
 Options:
- -a <0|1|2> agressivity: 0 is not agressive, 1 is agressive, 2 is very agressive [default: $agdefault]
+ -a <0|1|2> aggressivity: 0 is not aggressive, 1 is aggressive, 2 is very aggressive [default: $agdefault]
  -d <int>   resolution in DPI [default: $dpidefault]
  -l <0|1>   if not 0, will use forced segmentation [default: $codefault]
  -m <int>   if not 0, will use minidjvu (with <int> dictionary size) instead of cjb2 [default: $midefault]
@@ -82,7 +81,7 @@ if [ -d $f ] ; then
 fi
 done
 
-### Agressivity options
+### Aggressivity options
 case "$ag" in
    0)
       ags="<"
@@ -108,11 +107,11 @@ case "$ag" in
       c44opt="-slice 76+15"
       cjb2opt="-lossy"
       cpaldjvuopt=""
-      minidjvuopt="--lossy"
+      minidjvuopt="--lossy --aggression 200"
       bluropt="-blur 0x2 -contrast"
    ;;
    *)
-   printf "\nAgressivity has only three possible values: 0, 1, or 2.\n\n"
+   printf "\nAggressivity has only three possible values: 0, 1, or 2.\n\n"
    usage
    exit 1
 esac
@@ -195,9 +194,9 @@ function nomini {
 ( cd $fld &&
   ( # for every page
     for f in * ; do
+      of="$tmpdir/$f.pnm"
+      convert "$f" "$of" 2>/dev/null || continue ;
       printf "$ags" && \
-      of="$tmpdir/$f.pnm" && \
-      convert "$f" "$of" && \
       ( # switch between formats
         if [ `identify -format "%z" "$of"` -gt 1 ] ; then
            if [ $treshold -gt 0 ] ; then
@@ -236,8 +235,8 @@ function mini {
     pgcount=`ls -1 | wc -l` && \
     bwpages="" && \
     for f in * ; do
-      of="$tmpdir/$f.pnm" && \
-      convert "$fld/$f" "$of" && \
+      of="$tmpdir/$f.pnm"
+      convert "$f" "$of" 2>/dev/null || continue ;
         if [ `identify -format "%z" "$of"` -gt 1 ] ; then
            if [ $bwcount -gt 0 ] ; then
               minidjvucoder `echo $bwpages` "$of.1.djvu"

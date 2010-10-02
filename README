@@ -4,7 +4,7 @@ This is a single-pass DjVu encoder based on DjVu Libre, minidjvu and ImageMagick
 
 Examples ("images" is a folder which contains several TIFF files):
 
-img2djvu -d 600 images
+> img2djvu -d 600 images
 
 Will change default resolution (300 dpi) to 600 dpi
 
@@ -35,9 +35,6 @@ Will produce most compact output; however, check the result carefully---artifact
 
 Caveats
 
-Image folder should not contain any non-graphic files (unreadable by ImageMagick)!
-
 Image names are very important; they determine the page sequence in future DjVu file. I strongly recommend to re-name files sequentially (with console "mmv" or "rename", or with GUI renamers).
 
 It is not expected that forced segmentation will harm non-Scan Tailor files; moreover, its output should be smaller than c44 output even for "common" color files
-

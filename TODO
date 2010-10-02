@@ -1,0 +1,3 @@
+New codjvu for mini function: extract color chunks, keep them under name <page_num>.iw44, extract bw parts, remember their names in $bwpages, when <F> or end, start minidjvu, make multi-paged, then add color chunks to pages with <page_number>
+
+FGbz=#black for new djvumake (3.5.23)
