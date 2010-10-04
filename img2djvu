@@ -195,7 +195,7 @@ function nomini {
   ( # for every page
     for f in * ; do
       of="$tmpdir/$f.pnm"
-      convert "$f" "$of" 2>/dev/null || continue ;
+      convert "$fld/$f" "$of" 2>/dev/null || continue ;
       printf "$ags" && \
       ( # switch between formats
         if [ `identify -format "%z" "$of"` -gt 1 ] ; then
@@ -235,8 +235,9 @@ function mini {
     pgcount=`ls -1 | wc -l` && \
     bwpages="" && \
     for f in * ; do
+      pgcount=$((pgcount-1))
       of="$tmpdir/$f.pnm"
-      convert "$f" "$of" 2>/dev/null || continue ;
+      convert "$fld/$f" "$of" 2>/dev/null || continue ;
         if [ `identify -format "%z" "$of"` -gt 1 ] ; then
            if [ $bwcount -gt 0 ] ; then
               minidjvucoder `echo $bwpages` "$of.1.djvu"
@@ -259,8 +260,7 @@ function mini {
            bwpages="$bwpages $of"
            bwcount=$((bwcount+1))
         fi
-           pgcount=$((pgcount-1))
-           if [[ $pgcount -eq 0 && $bwcount -gt 0 ]] ; then 
+          if [[ $pgcount -eq 0 && $bwcount -gt 0 ]] ; then 
               minidjvucoder `echo $bwpages` "$of.1.djvu"
               bwpages=""
               bwcount=0

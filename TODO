@@ -1,3 +1,7 @@
-New codjvu for mini function: extract color chunks, keep them under name <page_num>.iw44, extract bw parts, remember their names in $bwpages, when <F> or end, start minidjvu, make multi-paged, then add color chunks to pages with <page_number>
+Background layer with adequate resize
 
-FGbz=#black for new djvumake (3.5.23)
+Check version, then FGbz=#black for new djvumake (3.5.23)
+
+Insert calls to cuneiform and hocr2djvused + djvused to make text layer
+
+New {twopass} function: extract color chunks, keep them under name <page_num>.iw44, extract bw parts, remember their names in $bwpages, when <F> or end, start minidjvu, make multi-paged, then add color chunks to pages with <page_number> OR do it for ALL pages (and somehow insert <F> pages at the end)

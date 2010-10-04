@@ -1,3 +1,5 @@
+0.9d Two bugs fixed: (1) lost path after minidjvu processing and (2) pgcount should decrease before breaking cycle if convert did not work
+
 0.9c minidjvu --agression 200 for -a 2; ignoring non-graphic files
 
 0.9b Functions cleanup
