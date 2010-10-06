@@ -1,6 +1,6 @@
 #!/bin/bash
 
-### Version 0.9c
+### Version 1.0
 ### Inspired by script pdf-trim-to-djvu.sh (http://gist.github.com/315791)
 ### PUBLIC DOMAIN
 
@@ -11,6 +11,8 @@ treshold=129
 usemini=0
 usecodjvu=0
 ag=0
+usepro="-contrast -blur 0x1"
+useocr=""
 # internal
 prog=$0
 dpidefault=$DPI
@@ -18,6 +20,8 @@ trdefault=$treshold
 midefault=$usemini
 codefault=$usecodjvu
 agdefault=$ag
+prodefault=$usepro
+ocrdefalut=$useocr
 
 function usage() {
   me=`basename "$prog"`
@@ -27,15 +31,17 @@ Usage: $me [options] folder_name
 Options:
  -a <0|1|2> aggressivity: 0 is not aggressive, 1 is aggressive, 2 is very aggressive [default: $agdefault]
  -d <int>   resolution in DPI [default: $dpidefault]
- -l <0|1>   if not 0, will use forced segmentation [default: $codefault]
+ -l <int>   if not 0, will use forced segmentation (with <int> downsampling) [default: $codefault]
  -m <int>   if not 0, will use minidjvu (with <int> dictionary size) instead of cjb2 [default: $midefault]
+ -r "str"   if not empty, use cuneiform with given language [default: $ocrdefault]
+ -p "str"   process color layer with given ImageMagick options [default: $prodefault]
  -t <int>   if not 0, will use cpaldjvu for all images with number of colors less than <int> [default: $trdefault]
  -h|--help  print this message
 
 END
 }
 
-opts=`getopt -l "help" "a:h:f:l:m:t:d:" "$@"` && eval set -- "$opts"
+opts=`getopt -l "help" "a:d:h:f:l:m:p:r:t:" "$@"` && eval set -- "$opts"
 while true ; do
   case "$1" in
     -h|--help) usage ; exit 0 ;;
@@ -43,28 +49,18 @@ while true ; do
     -d) DPI=$2 ; shift 2 ;;
     -l) usecodjvu=$2 ; shift 2 ;;
     -m) usemini=$2 ; shift 2 ;;
+    -r) useocr=$2 ; shift 2 ;;
+    -p) usepro=$2 ; shift 2 ;;
     -t) treshold=$2 ; shift 2 ;;
     --) shift ; break ;;
   esac
 done
 
+### Checks
 if [ $# -ne 1 ] ; then
   printf "\nFolder name is required.\n\n"
   usage
   exit 1
-fi
-
-### Checks
-if ! which identify >/dev/null ; then
-   printf "\nImageMagick should be installed.\n\n"
-   usage
-   exit 1
-fi
-
-if ! which cpaldjvu >/dev/null ; then
-   printf "\nDjVu Libre should be installed.\n\n"
-   usage
-   exit 1
 fi
 
 if [ ! -d $1 ] ; then
@@ -81,6 +77,33 @@ if [ -d $f ] ; then
 fi
 done
 
+if ! which cpaldjvu >/dev/null ; then
+   printf "\nDjVu Libre should be installed.\n\n"
+   usage
+   exit 1
+else
+   dv=`cpaldjvu 2>&1| sed -e '2,$d' -e 's/^.*-\([1-9.]*\)$/\1/' -e 's/\.//g'`
+fi
+
+if ! which identify >/dev/null ; then
+   printf "\nImageMagick should be installed.\n\n"
+   usage
+   exit 1
+fi
+
+if [ -n "$useocr" ] ; then
+   if ! which ocrodjvu >/dev/null ; then
+      printf "\nFor -r option, ocrodjvu and cuneiform should be installed.\n\n"
+      usage
+      exit 1
+   fi
+   if ! which cuneiform >/dev/null ; then
+      printf "\nFor -r option, cuneiform and ocrodjvu should be installed.\n\n"
+      usage
+      exit 1
+   fi
+fi
+
 ### Aggressivity options
 case "$ag" in
    0)
@@ -90,7 +113,6 @@ case "$ag" in
       cjb2opt=""
       cpaldjvuopt="-bgwhite"
       minidjvuopt=""
-      bluropt="-blur 0x1 -contrast"
    ;;
    1)
       ags="<<"
@@ -99,7 +121,6 @@ case "$ag" in
       cjb2opt="-clean"
       cpaldjvuopt=""
       minidjvuopt="--clean"
-      bluropt="-blur 0x1.5 -contrast"
    ;;
    2)
       ags="<<<"
@@ -108,7 +129,6 @@ case "$ag" in
       cjb2opt="-lossy"
       cpaldjvuopt=""
       minidjvuopt="--lossy --aggression 200"
-      bluropt="-blur 0x2 -contrast"
    ;;
    *)
    printf "\nAggressivity has only three possible values: 0, 1, or 2.\n\n"
@@ -135,7 +155,7 @@ function cpaldjvucoder {
 function minidjvucoder {
    printf "$ags""M:"
    minidjvu -d $DPI -p $usemini $minidjvuopt $@
-   printf "$bwcount""$age"
+   printf "$bwcount"
 }
 
 ### Forced segmentation coder
@@ -145,15 +165,14 @@ function codjvucoder {
    tmcdir=$tmpdir/codjvu
    mkdir $tmcdir
    # image parameters
-   h=`identify -format %h $1`
-   w=`identify -format %w $1`
+   newsize=`identify -format "%[fx:ceil(w/$usecodjvu)]x%[fx:ceil(h/$usecodjvu)]" $1`
    # separate layers from Scan Tailor
    convert -threshold 1 -compress Group4 $1 $tmcdir/fore.pbm
    composite -compose Add \( -negate $tmcdir/fore.pbm \) $1 $tmcdir/bback.ppm
    cd $tmcdir
    printf ":"
    # make BG44 chunk
-   convert bback.ppm $bluropt back.ppm
+   convert bback.ppm $usepro -resize $newsize\! back.ppm
    c44 $c44opt back.ppm back.djvu
    djvuextract back.djvu BG44=bg44.cnk >/dev/null 2>&1
    printf "1"
@@ -161,13 +180,26 @@ function codjvucoder {
    cjb2coder fore.pbm sjbz.djvu
    djvuextract sjbz.djvu Sjbz=sjbz.cnk >/dev/null 2>&1
    printf "+1"
-   # make FG44 chunk from background (!)
-   convert -size "$w"x"$h" -depth 8 xc:black fore.pgm
-   c44 -slice 120 fore.pgm fore.djvu
-   djvuextract fore.djvu BG44=fg44.cnk >/dev/null 2>&1
+   if [ $dv -lt 3523 ] ; then
+      # make FG44 chunk from background (!)
+      convert -size $newsize\! -depth 8 xc:black fore.pgm
+      c44 -slice 120 fore.pgm fore.djvu
+      djvuextract fore.djvu BG44=fg44.cnk >/dev/null 2>&1
+      # make compound DjVu
+      djvumake $2 Sjbz=sjbz.cnk FG44=fg44.cnk BG44=bg44.cnk
+      else
+      # use new ability of djvumake to create FGbz chunk on the fly
+      djvumake $2 Sjbz=sjbz.cnk FGbz="#black" BG44=bg44.cnk
+   fi
+   if [ -n "$useocr" ] ; then
+      convert fore.pbm fore.bmp
+      cuneiform -l $useocr -f hocr -o fore.hocr fore.bmp >/dev/null 2>&1
+      if [ -f fore.hocr ] ; then
+        hocr2djvused --page-size `identify -format "%wx%h" fore.pbm ` < fore.hocr 2>/dev/null | djvused -s $2
+        printf "+1"
+      fi
+   fi
    printf "+1"
-   # make compound DjVu
-   djvumake $2 Sjbz=sjbz.cnk FG44=fg44.cnk BG44=bg44.cnk
    cd ..
    rm -rf $tmcdir
 }
@@ -198,7 +230,7 @@ function nomini {
       convert "$fld/$f" "$of" 2>/dev/null || continue ;
       printf "$ags" && \
       ( # switch between formats
-        if [ `identify -format "%z" "$of"` -gt 1 ] ; then
+        if [ `identify -format "%q" "$of"` -gt 1 ] ; then
            if [ $treshold -gt 0 ] ; then
               colors=`identify -format "%k" "$of"` && \
               if [ $colors -lt $treshold ] ; then
@@ -212,6 +244,14 @@ function nomini {
         else
         cjb2coder "$of" "$of.djvu"
         printf "B"
+        if [ -n "$useocr" ] ; then
+           convert "$of" "$of.bmp"
+           cuneiform -l $useocr -f hocr -o "$of.hocr" "$of.bmp" >/dev/null 2>&1
+           if [ -f "$of.hocr" ] ; then
+              hocr2djvused --page-size `identify -format "%wx%h" $of ` < "$of.hocr" | djvused -s "$of.djvu"
+              printf "+"
+           fi
+        fi
         fi
       ) && \
       rm "$of" && \
@@ -241,8 +281,13 @@ function mini {
         if [ `identify -format "%z" "$of"` -gt 1 ] ; then
            if [ $bwcount -gt 0 ] ; then
               minidjvucoder `echo $bwpages` "$of.1.djvu"
+              if [ -n "$useocr" ] ; then
+                 ocrodjvu --engine cuneiform --language $useocr --in-place "$of.1.djvu" >/dev/null 2>&1
+                 printf "+"
+              fi
               bwpages=""
               bwcount=0
+              printf "$age"
            fi
            printf "$ags"
            if [ $treshold -gt 0 ] ; then
@@ -262,8 +307,13 @@ function mini {
         fi
           if [[ $pgcount -eq 0 && $bwcount -gt 0 ]] ; then 
               minidjvucoder `echo $bwpages` "$of.1.djvu"
+              if [ -n "$useocr" ] ; then
+                 ocrodjvu --engine cuneiform --language $useocr --in-place "$of.1.djvu" >/dev/null 2>&1
+                 printf "+"
+              fi
               bwpages=""
               bwcount=0
+              printf "$age"
            fi
     done
   ) &&
