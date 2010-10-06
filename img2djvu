@@ -1,6 +1,6 @@
 #!/bin/bash
 
-### Version 1.0
+### Version 1.1
 ### Inspired by script pdf-trim-to-djvu.sh (http://gist.github.com/315791)
 ### PUBLIC DOMAIN
 
@@ -158,7 +158,7 @@ function minidjvucoder {
    printf "$bwcount"
 }
 
-### Forced segmentation coder
+### Layer separation adn forced segmentation coder
 function codjvucoder {
    # folders
    printf "L"
@@ -167,12 +167,11 @@ function codjvucoder {
    # image parameters
    newsize=`identify -format "%[fx:ceil(w/$usecodjvu)]x%[fx:ceil(h/$usecodjvu)]" $1`
    # separate layers from Scan Tailor
-   convert -threshold 1 -compress Group4 $1 $tmcdir/fore.pbm
-   composite -compose Add \( -negate $tmcdir/fore.pbm \) $1 $tmcdir/bback.ppm
+   convert $1 -threshold 1 -compress Group4 $tmcdir/fore.pbm
+   convert $1 -fill white -opaque black $usepro -resize $newsize\! $tmcdir/back.ppm
    cd $tmcdir
    printf ":"
    # make BG44 chunk
-   convert bback.ppm $usepro -resize $newsize\! back.ppm
    c44 $c44opt back.ppm back.djvu
    djvuextract back.djvu BG44=bg44.cnk >/dev/null 2>&1
    printf "1"
@@ -227,7 +226,12 @@ function nomini {
   ( # for every page
     for f in * ; do
       of="$tmpdir/$f.pnm"
-      convert "$fld/$f" "$of" 2>/dev/null || continue ;
+      convert "$fld/$f" "$of" 2>/dev/null
+      convertfailed=$?
+      if [ $convertfailed -eq 1 ] ; then
+         printf "."
+         continue
+      fi
       printf "$ags" && \
       ( # switch between formats
         if [ `identify -format "%q" "$of"` -gt 1 ] ; then
@@ -272,49 +276,53 @@ function nomini {
 function mini {
 ( cd $fld &&
   ( bwcount=0 && \
-    pgcount=`ls -1 | wc -l` && \
     bwpages="" && \
     for f in * ; do
       pgcount=$((pgcount-1))
       of="$tmpdir/$f.pnm"
-      convert "$fld/$f" "$of" 2>/dev/null || continue ;
-        if [ `identify -format "%z" "$of"` -gt 1 ] ; then
-           if [ $bwcount -gt 0 ] ; then
-              minidjvucoder `echo $bwpages` "$of.1.djvu"
-              if [ -n "$useocr" ] ; then
-                 ocrodjvu --engine cuneiform --language $useocr --in-place "$of.1.djvu" >/dev/null 2>&1
-                 printf "+"
-              fi
-              bwpages=""
-              bwcount=0
-              printf "$age"
-           fi
-           printf "$ags"
-           if [ $treshold -gt 0 ] ; then
-              colors=`identify -format "%k" "$of"`
-              if [ $colors -lt $treshold ] ; then
-                 cpaldjvucoder "$of" "$of.2.djvu"
-              else
-                 colorcoder "$of" "$of.2.djvu"
-              fi
-           else
-              colorcoder "$of" "$of.2.djvu"
-           fi
-           printf "$age"
-        else
-           bwpages="$bwpages $of"
-           bwcount=$((bwcount+1))
-        fi
-          if [[ $pgcount -eq 0 && $bwcount -gt 0 ]] ; then 
-              minidjvucoder `echo $bwpages` "$of.1.djvu"
-              if [ -n "$useocr" ] ; then
-                 ocrodjvu --engine cuneiform --language $useocr --in-place "$of.1.djvu" >/dev/null 2>&1
-                 printf "+"
-              fi
-              bwpages=""
-              bwcount=0
-              printf "$age"
-           fi
+      convert "$fld/$f" "$of" 2>/dev/null
+      convertfailed=$?
+      if [ $convertfailed -eq 1 ] ; then
+         printf "."
+         continue
+      fi
+      if [ `identify -format "%z" "$of"` -gt 1 ] ; then
+         if [ $bwcount -gt 0 ] ; then
+            minidjvucoder `echo $bwpages` "$of.1.djvu"
+            if [ -n "$useocr" ] ; then
+               ocrodjvu --engine cuneiform --language $useocr --in-place "$of.1.djvu" >/dev/null 2>&1
+               printf "+"
+            fi
+            bwpages=""
+            bwcount=0
+            printf "$age"
+         fi
+         printf "$ags"
+         if [ $treshold -gt 0 ] ; then
+            colors=`identify -format "%k" "$of"`
+            if [ $colors -lt $treshold ] ; then
+               cpaldjvucoder "$of" "$of.2.djvu"
+            else
+               colorcoder "$of" "$of.2.djvu"
+            fi
+         else
+            colorcoder "$of" "$of.2.djvu"
+         fi
+         printf "$age"
+      else
+         bwpages="$bwpages $of"
+         bwcount=$((bwcount+1))
+      fi
+         if [[ $pgcount -eq 0 && $bwcount -gt 0 ]] ; then 
+            minidjvucoder `echo $bwpages` "$of.1.djvu"
+            if [ -n "$useocr" ] ; then
+               ocrodjvu --engine cuneiform --language $useocr --in-place "$of.1.djvu" >/dev/null 2>&1
+               printf "+"
+            fi
+            bwpages=""
+            bwcount=0
+            printf "$age"
+         fi
     done
   ) &&
   cd $tmpdir && \
@@ -331,6 +339,8 @@ fld="`pwd`/$1"
 djvu="`pwd`/$1.djvu"
 
 ### START!
+pgcount=`ls -1 $fld | wc -l`
+printf "$pgcount files:\n"
 if [ $usemini -lt 1 ] ; then
    tmpdir=`mktemp -d /tmp/pagesXXXXX`
    nomini

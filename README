@@ -4,53 +4,65 @@ img2djvu is a public domain. Many thanks to members of forum.ru-board.com for id
 
 ===
 
-Examples ("images" is a folder which contains several TIFF files):
+SIMPLE USE
 
-> img2djvu -d 600 images
+> img2djvu out
+
+(where "out" is a name of folder wich contains some images)
+
+img2djvu will output some diagnostics: total number of files in folder, then will show processing of every file. Skipped non-graphic files are dots (.), graphic files are triangle brackets (<>). Black and white pages are B or M (if minidjvu used), color pages are C, F (if cpaldjvu) or L (if layer separation). OCR is an additional layer (+1) or additional plus. Aggressivity is the number of enclosed brackets.
+
+===
+
+ADVANCED USE
+
+> img2djvu -d 600 out
 
 Will change default resolution (300 dpi) to 600 dpi
 
-> img2djvu -t 17 images
+> img2djvu -t 17 out
 
 Among color files, only files with color count < 17 will be sent to cpaldjvu DjVu coder
 
-> img2djvu -t 0 images
+> img2djvu -t 0 out
 
 Will skip ImageMagick color count (this is much faster!) and send all color files to c44 DjVu coder; cpaldjvu will not run
 
-> img2djvu -m 10 images
+> img2djvu -m 10 out
 
 For black and white pages, will employ minidjvu DjVu coder (with 10 pages per dictionary) instead of default cjb2 coder
 
-> img2djvu -l 1 images
+> img2djvu -l 1 out
 
-For color pages, will do layer separation (assuming that the file is the result of Scan Tailor mixed mode output), then blur color part and start forced segmentation; it is slow but usually produce compact output.
-Scan Tailor: http://scantailor.sourceforge.net/
-Layer separation after Scan Tailor: http://forum.ru-board.com/topic.cgi?forum=5&topic=32945 (in Russian)
-Forced segmentation: http://djvu-soft.narod.ru/scan/back_glue.htm (in Russian)
+For color pages, img2djvu will do layer separation*** (assuming that the file is the result of Scan Tailor* mixed mode output**), then blur color part and start forced segmentation****; it is slow but usually produce compact output.
+===
+*Scan Tailor: http://scantailor.sourceforge.net/
+**Mixed mode outputs image colors in [1...254] rank and text colors as pure black [0]
+***Layer separation after Scan Tailor: http://forum.ru-board.com/topic.cgi?forum=5&topic=32945 (in Russian)
+****Forced segmentation: http://djvu-soft.narod.ru/scan/back_glue.htm (in Russian)
 
-> img2djvu -a 2 -m 20 -l 1 images
+> img2djvu -a 2 -m 20 out
 
-Will produce compact output; however, check the result carefully---artifacts could appear!
+Will produce more compact output; however, check the result carefully---artifacts could appear!
 
-> img2djvu -l 2 images
+> img2djvu -l 4 out
 
-Will use two-fold downsampling for color layers. This will save lots of size. Coefficient should be an integer between 1 and 12; 2, 3, or 4 are best choices.
+Will use four-fold downsampling for color layers; result will be extremely compact. Coefficient should be an integer between 1 and 12; best choices are 2, 3, or 4.
 
-> img2djvu -p "" images
+> img2djvu -p "" out
 
 Will NOT use blur and contrast for processing color layers
 
-> img2djvu -l 1 -r rus -a 1 images
+> img2djvu -l 1 -r rus -a 1 out
 
 Will run hocr2djvused and/or ocrodjvu with cuneiform with "-rus" language option on both monochrome layers and monochrome pages and insert text layer
 
 ===
 
-Caveats
+CAVEATS
 
-It is expected that all images inside a folder have same resolution
+It is expected that all images inside a folder have the same resolution
 
 Image names are very important; they determine the page sequence in future DjVu file. It is strongly recommended to rename files sequentially before im2djvu run
 
-It is not expected that layer separation and forced segmentation will harm non-Scan Tailor files; moreover, its output should be smaller than c44 output even for "common" color files
+It is NOT expected that layer separation and forced segmentation will harm non-Scan Tailor files
