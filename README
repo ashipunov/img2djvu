@@ -1,6 +1,6 @@
 This is a single-pass DjVu encoder based on DjVu Libre and ImageMagick, optionally also minidjvu and ocrodjvu plus cuneiform
 
-img2djvu is a public domain. Many thanks to members of forum.ru-board.com for ideas, suggestions and corrections, especially to U235, anagnost96 and monday2000.
+img2djvu is in a public domain. Many thanks to members of forum.ru-board.com for ideas, suggestions and corrections, especially to U235, anagnost96 and monday2000.
 
 ===
 
@@ -10,7 +10,7 @@ SIMPLE USE
 
 (where "out" is a name of folder wich contains some images)
 
-img2djvu will output some diagnostics: total number of files in folder, then will show processing of every file. Skipped non-graphic files are dots (.), graphic files are triangle brackets (<>). Black and white pages are B or M (if minidjvu used), color pages are C, F (if cpaldjvu) or L (if layer separation). OCR is an additional layer (+1) or additional plus. Aggressivity is the number of enclosed brackets.
+img2djvu will output some diagnostics: first, total number of files in folder, then will show processing status of every file. Skipped non-graphic files are labeled with dots (.), graphic files are labeled with angle brackets (<>). Black and white pages are labeled with B or M (if minidjvu used), color pages with C, F (if cpaldjvu used) or L (if layer separation used). OCR labeled as an additional layer (+1) or additional plus (+). Aggressivity is the number of enclosed brackets (e.g., <<<>>> for -a 2).
 
 ===
 
@@ -35,11 +35,16 @@ For black and white pages, will employ minidjvu DjVu coder (with 10 pages per di
 > img2djvu -l 1 out
 
 For color pages, img2djvu will do layer separation*** (assuming that the file is the result of Scan Tailor* mixed mode output**), then blur color part and start forced segmentation****; it is slow but usually produce compact output.
+
 ===
-*Scan Tailor: http://scantailor.sourceforge.net/
-**Mixed mode outputs image colors in [1...254] rank and text colors as pure black [0]
-***Layer separation after Scan Tailor: http://forum.ru-board.com/topic.cgi?forum=5&topic=32945 (in Russian)
-****Forced segmentation: http://djvu-soft.narod.ru/scan/back_glue.htm (in Russian)
+
+*    Scan Tailor: http://scantailor.sourceforge.net/
+
+**   Mixed mode outputs image colors in [1...254] rank and text colors as pure black [0]
+
+***  Layer separation after Scan Tailor: http://forum.ru-board.com/topic.cgi?forum=5&topic=32945 (in Russian), http://alexrey036.narod.ru/LayerTailor/LayerTailor.zip
+
+**** Forced segmentation: http://djvu-soft.narod.ru/scan/back_glue.htm (in Russian)
 
 > img2djvu -a 2 -m 20 out
 
