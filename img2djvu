@@ -1,6 +1,6 @@
 #!/bin/bash
 
-### Version 1.1
+### Version 1.2
 ### Inspired by script pdf-trim-to-djvu.sh (http://gist.github.com/315791)
 ### PUBLIC DOMAIN
 
@@ -13,6 +13,7 @@ usecodjvu=0
 ag=0
 usepro="-contrast -blur 0x1"
 useocr=""
+verbmini=0
 # internal
 prog=$0
 dpidefault=$DPI
@@ -22,6 +23,7 @@ codefault=$usecodjvu
 agdefault=$ag
 prodefault=$usepro
 ocrdefalut=$useocr
+verbminidefault=$verbmini
 
 function usage() {
   me=`basename "$prog"`
@@ -36,12 +38,13 @@ Options:
  -r "str"   if not empty, use cuneiform with given language [default: $ocrdefault]
  -p "str"   process color layer with given ImageMagick options [default: $prodefault]
  -t <int>   if not 0, will use cpaldjvu for all images with number of colors less than <int> [default: $trdefault]
+ -v <0|1>   if not 0, minidjvu run will be verbose [default: $verbminidefault]
  -h|--help  print this message
 
 END
 }
 
-opts=`getopt -l "help" "a:d:h:f:l:m:p:r:t:" "$@"` && eval set -- "$opts"
+opts=`getopt -l "help" "a:d:h:f:l:m:p:r:t:v:" "$@"` && eval set -- "$opts"
 while true ; do
   case "$1" in
     -h|--help) usage ; exit 0 ;;
@@ -52,6 +55,7 @@ while true ; do
     -r) useocr=$2 ; shift 2 ;;
     -p) usepro=$2 ; shift 2 ;;
     -t) treshold=$2 ; shift 2 ;;
+    -v) verbmini=$2 ; shift 2 ;;
     --) shift ; break ;;
   esac
 done
@@ -153,8 +157,12 @@ function cpaldjvucoder {
 }
 
 function minidjvucoder {
+   if [ $verbmini -gt 0 ] ; then
+      minidjvu -d $DPI -p $usemini $minidjvuopt -v $@
+   else
+      minidjvu -d $DPI -p $usemini $minidjvuopt $@
+   fi
    printf "$ags""M:"
-   minidjvu -d $DPI -p $usemini $minidjvuopt $@
    printf "$bwcount"
 }
 
@@ -167,7 +175,7 @@ function codjvucoder {
    # image parameters
    newsize=`identify -format "%[fx:ceil(w/$usecodjvu)]x%[fx:ceil(h/$usecodjvu)]" $1`
    # separate layers from Scan Tailor
-   convert $1 -threshold 1 -compress Group4 $tmcdir/fore.pbm
+   convert $1 -threshold 1 $tmcdir/fore.pbm
    convert $1 -fill white -opaque black $usepro -resize $newsize\! $tmcdir/back.ppm
    cd $tmcdir
    printf ":"

@@ -1,3 +1,5 @@
+1.2 Removed useless Group4 conversion option (thanks to anagnost96), added verbosity option specific for minidjvu
+
 1.1 Removed call to composite -- speed increased by 20%, thanks to U235; added some output (number of files and skipped files)
 
 1.0 Background color layer now downsampled; if DjVuLibre version > 3.5.32, uses FGbz chunk instead of FG44; image processing is now controlled with -p option; OCR via ocrodjvu/hocr2djvused + cuneiform is possible
