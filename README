@@ -58,9 +58,9 @@ Will use four-fold downsampling for color layers; result will be extremely compa
 
 Will NOT use blur and contrast for processing color layers
 
-> img2djvu -l 1 -r rus -a 1 out
+> img2djvu -l 1 -r rus -e cuneiform -a 1 out
 
-Will run hocr2djvused and/or ocrodjvu with cuneiform with "-rus" language option on both monochrome layers and monochrome pages and insert text layer
+After creation of final DjVu, will run cuneiform with "-rus" language option via ocrodjvu and insert text layer in place
 
 ===
 

@@ -1,3 +1,3 @@
-Implement choice of OCR engines: tesseract (but how to make hOCR without specifying configuration file?) or cuneiform
+(?) MMR and JPEG (ald also 2k?) chunks (with djvumake) instead of JB2 and IW44 for B&W and color pages, respectively
 
-(?) New {twopass} function: extract color chunks, keep them under name <page_num>.iw44, extract bw parts, remember their names in $bwpages, when <F> or end, start minidjvu, make multi-paged, then add color chunks to pages with <page_number> OR do it for ALL pages (and somehow insert <F> pages at the end)
+(?) New {twopass} function for cases when minidjvu dictionary broken with color files: extract color chunks, keep them under name <page_num>.iw44, extract bw parts, remember their names in $bwpages, when <F> or end, start minidjvu, make multi-paged, then add color chunks to pages with <page_number> OR do it for ALL pages (and somehow insert <F> pages at the end)
