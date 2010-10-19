@@ -66,6 +66,8 @@ After creation of final DjVu, will run cuneiform with "-rus" language option via
 
 CAVEATS
 
+Absolute paths are not allowed
+
 It is expected that all images inside a folder have the same resolution
 
 Image names are very important; they determine the page sequence in future DjVu file. It is strongly recommended to rename files sequentially before im2djvu run

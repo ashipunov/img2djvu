@@ -1,6 +1,6 @@
 #!/bin/bash
 
-### Version 1.4
+### Version 1.5
 ### Inspired by script pdf-trim-to-djvu.sh (http://gist.github.com/315791)
 ### PUBLIC DOMAIN
 
@@ -30,7 +30,7 @@ verbminidefault=$verbmini
 function usage() {
   me=`basename "$prog"`
   cat << END
-Usage: $me [options] folder_name
+Usage: $me [options] relative_folder_name
 
 Options:
  -a <0|1|2> aggressivity: 0 is not aggressive, 1 is aggressive, 2 is very aggressive [default: $agdefault]
@@ -71,19 +71,18 @@ if [ $# -ne 1 ] ; then
   exit 1
 fi
 
+if [ "`echo $1 | sed -e 's|^\(.\).*$|\1|'`" = "/" ] ; then
+  printf "\nAbsolute folder names are not allowed.\n\n"
+  usage
+  exit 1
+fi
+
+
 if [ ! -d $1 ] ; then
    printf "\n$1 is not a folder.\n\n"
    usage
    exit 1
 fi
-
-for f in $1/* ; do
-if [ -d $f ] ; then
-   printf "\nImage folder should not contain any subfolders.\n\n"
-   usage
-   exit 1
-fi
-done
 
 if ! which cpaldjvu >/dev/null ; then
    printf "\nDjVu Libre should be installed.\n\n"
@@ -235,7 +234,7 @@ function codjvucoder {
 function nomini {
 ( cd $fld &&
   ( # for every page
-    for f in `ls *` ; do
+    for f in `ls -p | egrep -v '/$'` ; do
       of="$tmpdir/$f.pnm"
       convert "$fld/$f" "$of" 2>/dev/null
       convertfailed=$?
@@ -284,7 +283,7 @@ function mini {
 ( cd $fld &&
   ( bwcount=0 && \
     bwpages="" && \
-    for f in `ls *` ; do
+    for f in `ls -p | egrep -v '/$'` ; do
       pgcount=$((pgcount-1))
       of="$tmpdir/$f.pnm"
       convert "$fld/$f" "$of" 2>/dev/null
@@ -342,7 +341,7 @@ fld="`pwd`/$1"
 djvu="`pwd`/$1.djvu"
 
 ### START!
-pgcount=`ls -1 $fld | wc -l`
+pgcount=`ls -1p $fld | egrep -v '/$' | wc -l`
 printf "$pgcount files:\n"
 if [ $usemini -lt 1 ] ; then
    tmpdir=`mktemp -d /tmp/pagesXXXXX`

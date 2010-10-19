@@ -1,3 +1,5 @@
+1.5 Subfolders are ingnored, additional check for absolute paths which are not allowed
+
 1.4 OCR for all pages via ocrodjvu, language AND engine could be specified (new option -e)
 
 1.3 Added DPI for c44 coder amd makedjvu (inside codjvu function)
