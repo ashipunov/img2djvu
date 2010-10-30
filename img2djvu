@@ -1,6 +1,6 @@
 #!/bin/bash
 
-### Version 1.5
+### Version 1.6
 ### Inspired by script pdf-trim-to-djvu.sh (http://gist.github.com/315791)
 ### PUBLIC DOMAIN
 
@@ -235,7 +235,7 @@ function nomini {
 ( cd $fld &&
   ( # for every page
     for f in `ls -p | egrep -v '/$'` ; do
-      of="$tmpdir/$f.pnm"
+      of="$tmpdir/${f%.*}.pnm"
       convert "$fld/$f" "$of" 2>/dev/null
       convertfailed=$?
       if [ $convertfailed -eq 1 ] ; then
@@ -285,7 +285,7 @@ function mini {
     bwpages="" && \
     for f in `ls -p | egrep -v '/$'` ; do
       pgcount=$((pgcount-1))
-      of="$tmpdir/$f.pnm"
+      of="$tmpdir/${f%.*}.pnm"
       convert "$fld/$f" "$of" 2>/dev/null
       convertfailed=$?
       if [ $convertfailed -eq 1 ] ; then
