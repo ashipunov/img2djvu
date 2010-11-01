@@ -15,6 +15,7 @@ usepro="-contrast -blur 0x1"
 ocrengine=""
 ocrlanguage=""
 verbmini=0
+tmp="/tmp"
 # internal
 prog=$0
 dpidefault=$DPI
@@ -26,6 +27,7 @@ prodefault=$usepro
 ocrenginedefault=$ocrengine
 ocrlanguagedefault=$ocrlanguage
 verbminidefault=$verbmini
+tmpdefault=$tmp
 
 function usage() {
   me=`basename "$prog"`
@@ -34,6 +36,7 @@ Usage: $me [options] relative_folder_name
 
 Options:
  -a <0|1|2> aggressivity: 0 is not aggressive, 1 is aggressive, 2 is very aggressive [default: $agdefault]
+ -c <0|1>   make a choice of temporary directory, 0 for /tmp, 1 for current [default: $tmpdefault]
  -d <int>   resolution in DPI [default: $dpidefault]
  -e "str"   if not empty, use OCR engine (supported by ocrodjvu) with this name [default: $ocrenginedefault]
  -l <int>   if not 0, will use forced segmentation (with <int> downsampling) [default: $codefault]
@@ -47,11 +50,12 @@ Options:
 END
 }
 
-opts=`getopt -l "help" "a:d:e:h:f:l:m:p:r:t:v:" "$@"` && eval set -- "$opts"
+opts=`getopt -l "help" "a:c:d:e:h:f:l:m:p:r:t:v:" "$@"` && eval set -- "$opts"
 while true ; do
   case "$1" in
     -h|--help) usage ; exit 0 ;;
     -a) ag=$2 ; shift 2 ;;
+    -c) tmp=$2 ; shift 2 ;;
     -d) DPI=$2 ; shift 2 ;;
     -e) ocrengine=$2; shift 2 ;;
     -l) usecodjvu=$2 ; shift 2 ;;
@@ -244,19 +248,19 @@ function nomini {
       fi
       printf "$ags" && \
       ( # switch between formats
-        if [ `identify -format "%q" "$of"` -gt 1 ] ; then
+        if [ `identify -format "%z" "$of"` -gt 1 ] ; then
            if [ $treshold -gt 0 ] ; then
               colors=`identify -format "%k" "$of"` && \
               if [ $colors -lt $treshold ] ; then
-                 cpaldjvucoder "$of" "$of.djvu"
+                 cpaldjvucoder "$of" "${of%pnm}djvu"
               else
-                 colorcoder "$of" "$of.djvu"
+                 colorcoder "$of" "${of%pnm}djvu"
               fi
           else
-              colorcoder "$of" "$of.djvu"
+              colorcoder "$of" "${of%pnm}djvu"
           fi
         else
-        cjb2coder "$of" "$of.djvu"
+        cjb2coder "$of" "${of%pnm}djvu"
         printf "B"
         fi
       ) && \
@@ -294,7 +298,7 @@ function mini {
       fi
       if [ `identify -format "%z" "$of"` -gt 1 ] ; then
          if [ $bwcount -gt 0 ] ; then
-            minidjvucoder `echo $bwpages` "$of.1.djvu"
+            minidjvucoder `echo $bwpages` "${of%pnm}1.djvu"
             bwpages=""
             bwcount=0
             printf "$age"
@@ -303,12 +307,12 @@ function mini {
          if [ $treshold -gt 0 ] ; then
             colors=`identify -format "%k" "$of"`
             if [ $colors -lt $treshold ] ; then
-               cpaldjvucoder "$of" "$of.2.djvu"
+               cpaldjvucoder "$of" "${of%pnm}2.djvu"
             else
-               colorcoder "$of" "$of.2.djvu"
+               colorcoder "$of" "${of%pnm}2.djvu"
             fi
          else
-            colorcoder "$of" "$of.2.djvu"
+            colorcoder "$of" "${of%pnm}2.djvu"
          fi
          printf "$age"
       else
@@ -316,7 +320,7 @@ function mini {
          bwcount=$((bwcount+1))
       fi
          if [[ $pgcount -eq 0 && $bwcount -gt 0 ]] ; then 
-            minidjvucoder `echo $bwpages` "$of.1.djvu"
+            minidjvucoder `echo $bwpages` "${of%pnm}1.djvu"
             bwpages=""
             bwcount=0
             printf "$age"
@@ -339,12 +343,18 @@ function mini {
 # Absolute paths to input folder and output DjVu files
 fld="`pwd`/$1"
 djvu="`pwd`/$1.djvu"
+if [ $tmp -eq 0 ]; then
+   tmpdirprefix="/tmp"
+else
+   tmpdirprefix=`pwd`
+fi
+
 
 ### START!
 pgcount=`ls -1p $fld | egrep -v '/$' | wc -l`
 printf "$pgcount files:\n"
 if [ $usemini -lt 1 ] ; then
-   tmpdir=`mktemp -d /tmp/pagesXXXXX`
+   tmpdir=`mktemp -d $tmpdirprefix/pagesXXXXX`
    nomini
 else
    if ! which minidjvu >/dev/null ; then
@@ -352,6 +362,6 @@ else
       usage
       exit 1
    fi
-   tmpdir=`mktemp -d /tmp/pagesXXXXX`
+   tmpdir=`mktemp -d $tmpdirprefix/pagesXXXXX`
    mini
 fi

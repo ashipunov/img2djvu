@@ -1,4 +1,6 @@
-1.6 Do not use double extensions (thanks to Kyrill Detinov)
+1.7 Choice of temporary folder (thanks to Kyrill Detinov)
+
+1.6 Does not use double extensions (thanks to Kyrill Detinov)
 
 1.5 Subfolders are ingnored, additional check for absolute paths which are not allowed
 
