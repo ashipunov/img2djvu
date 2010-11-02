@@ -62,6 +62,10 @@ Will NOT use blur and contrast for processing color layers
 
 After creation of final DjVu, will run cuneiform with "-rus" language option via ocrodjvu and insert text layer in place
 
+> img2djvu -c 1 out
+
+Will create temporary files in current directory
+
 ===
 
 CAVEATS

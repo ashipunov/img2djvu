@@ -15,7 +15,7 @@ usepro="-contrast -blur 0x1"
 ocrengine=""
 ocrlanguage=""
 verbmini=0
-tmp="/tmp"
+tmp=0
 # internal
 prog=$0
 dpidefault=$DPI
@@ -348,7 +348,6 @@ if [ $tmp -eq 0 ]; then
 else
    tmpdirprefix=`pwd`
 fi
-
 
 ### START!
 pgcount=`ls -1p $fld | egrep -v '/$' | wc -l`
