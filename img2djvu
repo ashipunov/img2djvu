@@ -1,6 +1,6 @@
 #!/bin/bash
 
-### Version 1.6
+### Version 1.9
 ### Inspired by script pdf-trim-to-djvu.sh (http://gist.github.com/315791)
 ### PUBLIC DOMAIN
 
@@ -17,34 +17,34 @@ ocrlanguage=""
 verbmini=0
 tmp=0
 # internal
-prog=$0
-dpidefault=$DPI
-trdefault=$treshold
-midefault=$usemini
-codefault=$usecodjvu
-agdefault=$ag
-prodefault=$usepro
-ocrenginedefault=$ocrengine
-ocrlanguagedefault=$ocrlanguage
-verbminidefault=$verbmini
-tmpdefault=$tmp
+prog="$0"
+dpidefault="$DPI"
+trdefault="$treshold"
+midefault="$usemini"
+codefault="$usecodjvu"
+agdefault="$ag"
+prodefault="$usepro"
+ocrenginedefault="$ocrengine"
+ocrlanguagedefault="$ocrlanguage"
+verbminidefault="$verbmini"
+tmpdefault="$tmp"
 
 function usage() {
   me=`basename "$prog"`
   cat << END
-Usage: $me [options] relative_folder_name
+Usage: "$me" [options] relative_folder_name
 
 Options:
- -a <0|1|2> aggressivity: 0 is not aggressive, 1 is aggressive, 2 is very aggressive [default: $agdefault]
- -c <0|1>   make a choice of temporary directory, 0 for /tmp, 1 for current [default: $tmpdefault]
- -d <int>   resolution in DPI [default: $dpidefault]
- -e "str"   if not empty, use OCR engine (supported by ocrodjvu) with this name [default: $ocrenginedefault]
- -l <int>   if not 0, will use forced segmentation (with <int> downsampling) [default: $codefault]
- -m <int>   if not 0, will use minidjvu (with <int> dictionary size) instead of cjb2 [default: $midefault]
- -r "str"   if not empty, use OCR engine with given language [default: $ocrlanguagedefault]
- -p "str"   process color layer with given ImageMagick options [default: $prodefault]
- -t <int>   if not 0, will use cpaldjvu for all images with number of colors less than <int> [default: $trdefault]
- -v <0|1>   if not 0, minidjvu run will be verbose [default: $verbminidefault]
+ -a <0|1|2> aggressivity: 0 is not aggressive, 1 is aggressive, 2 is very aggressive [default: "$agdefault"]
+ -c <0|1>   make a choice of temporary directory, 0 for /tmp, 1 for current [default: "$tmpdefault"]
+ -d <int>   resolution in DPI [default: "$dpidefault"]
+ -e "str"   if not empty, use OCR engine (supported by ocrodjvu) with this name [default: "$ocrenginedefault"]
+ -l <int>   if not 0, will use forced segmentation (with <int> downsampling) [default: "$codefault"]
+ -m <int>   if not 0, will use minidjvu (with <int> dictionary size) instead of cjb2 [default: "$midefault"]
+ -r "str"   if not empty, use OCR engine with given language [default: "$ocrlanguagedefault"]
+ -p "str"   process color layer with given ImageMagick options [default: "$prodefault"]
+ -t <int>   if not 0, will use cpaldjvu for all images with number of colors less than <int> [default: "$trdefault"]
+ -v <0|1>   if not 0, minidjvu run will be verbose [default: "$verbminidefault"]
  -h|--help  print this message
 
 END
@@ -54,16 +54,16 @@ opts=`getopt -l "help" "a:c:d:e:h:f:l:m:p:r:t:v:" "$@"` && eval set -- "$opts"
 while true ; do
   case "$1" in
     -h|--help) usage ; exit 0 ;;
-    -a) ag=$2 ; shift 2 ;;
-    -c) tmp=$2 ; shift 2 ;;
-    -d) DPI=$2 ; shift 2 ;;
-    -e) ocrengine=$2; shift 2 ;;
-    -l) usecodjvu=$2 ; shift 2 ;;
-    -m) usemini=$2 ; shift 2 ;;
-    -r) ocrlanguage=$2 ; shift 2 ;;
-    -p) usepro=$2 ; shift 2 ;;
-    -t) treshold=$2 ; shift 2 ;;
-    -v) verbmini=$2 ; shift 2 ;;
+    -a) ag="$2" ; shift 2 ;;
+    -c) tmp="$2" ; shift 2 ;;
+    -d) DPI="$2" ; shift 2 ;;
+    -e) ocrengine="$2"; shift 2 ;;
+    -l) usecodjvu="$2" ; shift 2 ;;
+    -m) usemini="$2" ; shift 2 ;;
+    -r) ocrlanguage="$2" ; shift 2 ;;
+    -p) usepro="$2" ; shift 2 ;;
+    -t) treshold="$2" ; shift 2 ;;
+    -v) verbmini="$2" ; shift 2 ;;
     --) shift ; break ;;
   esac
 done
@@ -75,14 +75,14 @@ if [ $# -ne 1 ] ; then
   exit 1
 fi
 
-if [ "`echo $1 | sed -e 's|^\(.\).*$|\1|'`" = "/" ] ; then
+if [ "`echo "$1" | sed -e 's|^\(.\).*$|\1|'`" = "/" ] ; then
   printf "\nAbsolute folder names are not allowed.\n\n"
   usage
   exit 1
 fi
 
 
-if [ ! -d $1 ] ; then
+if [ ! -d "$1" ] ; then
    printf "\n$1 is not a folder.\n\n"
    usage
    exit 1
@@ -102,9 +102,9 @@ if ! which identify >/dev/null ; then
    exit 1
 fi
 
-if ! [[ -n $ocrengine && -n $ocrlanguage ]] ; then
+if ! [[ -n "$ocrengine" && -n "$ocrlanguage" ]] ; then
    useocr=0
-   if [[ -n $ocrengine || -n $ocrlanguage ]] ; then
+   if [[ -n "$ocrengine" || -n "$ocrlanguage" ]] ; then
       printf "\nFor OCR, both OCR options (-e and -r) should be specified.\n\n"
       usage
       exit 1
@@ -153,10 +153,10 @@ esac
 ### General coders functions
 
 function colorcoder {
-if [ $usecodjvu -lt 1 ] ; then
-   c44coder $1 $2
+if [ "$usecodjvu" -lt 1 ] ; then
+   c44coder "$1" "$2"
 else
-   codjvucoder $1 $2
+   codjvucoder "$1" "$2"
 fi
 }
 
@@ -164,15 +164,15 @@ fi
 
 ### Black and white
 function cjb2coder {
-   cjb2 $cjb2opt -dpi $DPI $1 $2
+   cjb2 "$cjb2opt" -dpi "$DPI" "$1" "$2"
    # This function does not print because it is called also from inside codjvucoder
 }
 
 function minidjvucoder {
-   if [ $verbmini -gt 0 ] ; then
-      minidjvu -d $DPI -p $usemini $minidjvuopt -v $@
+   if [ "$verbmini" -gt 0 ] ; then
+      minidjvu -d "$DPI" -p "$usemini" "$minidjvuopt" -v $@
    else
-      minidjvu -d $DPI -p $usemini $minidjvuopt $@
+      minidjvu -d "$DPI" -p "$usemini" "$minidjvuopt" $@
    fi
    printf "$ags""M:"
    printf "$bwcount"
@@ -180,12 +180,12 @@ function minidjvucoder {
 
 ### Color
 function cpaldjvucoder {
-   cpaldjvu $cpaldjvuopt -dpi $DPI $1 $2
+   cpaldjvu "$cpaldjvuopt" -dpi "$DPI" "$1" "$2"
    printf "F"
 }
 
 function c44coder {
-   c44 $c44opt -dpi $DPI $1 $2
+   c44 "$c44opt" -dpi "$DPI" "$1" "$2"
    printf "C"
 }
 
@@ -193,37 +193,37 @@ function c44coder {
 function codjvucoder {
    # folders
    printf "L"
-   tmcdir=$tmpdir/tmp
-   mkdir $tmcdir
+   tmcdir="$tmpdir"/tmp
+   mkdir "$tmcdir"
    # image parameters
-   newsize=`identify -format "%[fx:ceil(w/$usecodjvu)]x%[fx:ceil(h/$usecodjvu)]" $1`
+   newsize=`identify -format "%[fx:ceil(w/$usecodjvu)]x%[fx:ceil(h/$usecodjvu)]" "$1"`
    # separate layers from Scan Tailor
-   convert $1 -threshold 1 $tmcdir/fore.pbm
-   convert $1 -fill white -opaque black $usepro -resize $newsize\! $tmcdir/back.ppm
-   cd $tmcdir
+   convert "$1" -threshold 1 "$tmcdir"/fore.pbm
+   convert "$1" -fill white -opaque black "$usepro" -resize "$newsize"\! "$tmcdir"/back.ppm
+   cd "$tmcdir"
    printf ":"
    # make BG44 chunk
-   c44 $c44opt -dpi $DPI back.ppm back.djvu
+   c44 "$c44opt" -dpi "$DPI" back.ppm back.djvu
    djvuextract back.djvu BG44=bg44.cnk >/dev/null 2>&1
    printf "1"
    # make Sjbz chunk
    cjb2coder fore.pbm sjbz.djvu
    djvuextract sjbz.djvu Sjbz=sjbz.cnk >/dev/null 2>&1
    printf "+1"
-   if [ $dv -lt 3523 ] ; then
+   if [ "$dv" -lt 3523 ] ; then
       # make FG44 chunk from background (!)
-      convert -size $newsize\! -depth 8 xc:black fore.pgm
-      c44 -dpi $DPI -slice 120 fore.pgm fore.djvu
+      convert -size "$newsize"\! -depth 8 xc:black fore.pgm
+      c44 -dpi "$DPI" -slice 120 fore.pgm fore.djvu
       djvuextract fore.djvu BG44=fg44.cnk >/dev/null 2>&1
       # make compound DjVu
-      djvumake $2 INFO=,,"$DPI" Sjbz=sjbz.cnk FG44=fg44.cnk BG44=bg44.cnk
+      djvumake "$2" INFO=,,"$DPI" Sjbz=sjbz.cnk FG44=fg44.cnk BG44=bg44.cnk
       else
       # use new ability of djvumake to create FGbz chunk on the fly
-      djvumake $2 INFO=,,"$DPI" Sjbz=sjbz.cnk FGbz="#black" BG44=bg44.cnk
+      djvumake "$2" INFO=,,"$DPI" Sjbz=sjbz.cnk FGbz="#black" BG44=bg44.cnk
    fi
    printf "+1"
    cd ..
-   rm -rf $tmcdir
+   rm -rf "$tmcdir"
 }
 
 ### General coder and bundler
@@ -236,22 +236,24 @@ function codjvucoder {
 # display progress symbols (B or M for Bitonal, C for TrueColor, L for codjvu layers, F for Palette)
 # create bundled DjVu file
 function nomini {
-( cd $fld &&
+( cd "$fld" &&
   ( # for every page
-    for f in `ls -p | egrep -v '/$'` ; do
+    SAVEIFS=$IFS
+    IFS=$(echo -en "\n\b")
+    for f in `ls -1p | egrep -v '/$'` ; do
       of="$tmpdir/${f%.*}.pnm"
       convert "$fld/$f" "$of" 2>/dev/null
       convertfailed=$?
-      if [ $convertfailed -eq 1 ] ; then
+      if [ "$convertfailed" -eq 1 ] ; then
          printf "."
          continue
       fi
       printf "$ags" && \
       ( # switch between formats
         if [ `identify -format "%z" "$of"` -gt 1 ] ; then
-           if [ $treshold -gt 0 ] ; then
+           if [ "$treshold" -gt 0 ] ; then
               colors=`identify -format "%k" "$of"` && \
-              if [ $colors -lt $treshold ] ; then
+              if [ "$colors" -lt "$treshold" ] ; then
                  cpaldjvucoder "$of" "${of%pnm}djvu"
               else
                  colorcoder "$of" "${of%pnm}djvu"
@@ -267,16 +269,17 @@ function nomini {
       rm "$of" && \
       printf "$age"
     done
+    IFS=$SAVEIFS
   ) &&
-  cd $tmpdir && \
+  cd "$tmpdir" && \
   djvm -c "$djvu" *.djvu && \
   printf "\nDone.\n" && \
   if [ "$useocr" -gt 0 ] ; then
      printf "Starting OCR...\n"
-     ocrodjvu --engine $ocrengine --language $ocrlanguage --in-place --on-error=resume "$djvu"
+     ocrodjvu --engine "$ocrengine" --language "$ocrlanguage" --in-place --on-error=resume "$djvu"
   fi
 ) && rm -rf "$tmpdir" || (
-  printf "Failure\nTemporary directory left: %s\n" $tmpdir
+  printf "Failure\nTemporary directory left: %s\n" "$tmpdir"
   exit 2
 )
 }
@@ -284,29 +287,31 @@ function nomini {
 ### Minidjvu-based coder and bundler
 # Similar to previous, but instead of cjb2 minidjvu called every time when black and white sequence interrupted with color image, or when sequence ends on black and white file
 function mini {
-( cd $fld &&
+( cd "$fld" &&
   ( bwcount=0 && \
     bwpages="" && \
-    for f in `ls -p | egrep -v '/$'` ; do
+    SAVEIFS=$IFS
+    IFS=$(echo -en "\n\b")
+    for f in `ls -1p | egrep -v '/$'` ; do
       pgcount=$((pgcount-1))
       of="$tmpdir/${f%.*}.pnm"
       convert "$fld/$f" "$of" 2>/dev/null
       convertfailed=$?
-      if [ $convertfailed -eq 1 ] ; then
+      if [ "$convertfailed" -eq 1 ] ; then
          printf "."
          continue
       fi
       if [ `identify -format "%z" "$of"` -gt 1 ] ; then
-         if [ $bwcount -gt 0 ] ; then
-            minidjvucoder `echo $bwpages` "${of%pnm}1.djvu"
+         if [ "$bwcount" -gt 0 ] ; then
+            minidjvucoder `echo "$bwpages"` "${of%pnm}1.djvu"
             bwpages=""
             bwcount=0
             printf "$age"
          fi
          printf "$ags"
-         if [ $treshold -gt 0 ] ; then
+         if [ "$treshold" -gt 0 ] ; then
             colors=`identify -format "%k" "$of"`
-            if [ $colors -lt $treshold ] ; then
+            if [ "$colors" -lt "$treshold" ] ; then
                cpaldjvucoder "$of" "${of%pnm}2.djvu"
             else
                colorcoder "$of" "${of%pnm}2.djvu"
@@ -319,23 +324,24 @@ function mini {
          bwpages="$bwpages $of"
          bwcount=$((bwcount+1))
       fi
-         if [[ $pgcount -eq 0 && $bwcount -gt 0 ]] ; then 
-            minidjvucoder `echo $bwpages` "${of%pnm}1.djvu"
+         if [[ "$pgcount" -eq 0 && "$bwcount" -gt 0 ]] ; then 
+            minidjvucoder `echo "$bwpages"` "${of%pnm}1.djvu"
             bwpages=""
             bwcount=0
             printf "$age"
          fi
     done
+    IFS=$SAVEIFS
   ) &&
-  cd $tmpdir && \
+  cd "$tmpdir" && \
   djvm -c "$djvu" *.djvu && \
   printf "\nDone.\n" && \
   if [ "$useocr" -gt 0 ] ; then
      printf "Starting OCR...\n"
-     ocrodjvu --engine $ocrengine --language $ocrlanguage --in-place --on-error=resume "$djvu"
+     ocrodjvu --engine "$ocrengine" --language "$ocrlanguage" --in-place --on-error=resume "$djvu"
   fi
 ) && rm -rf "$tmpdir" || (
-  printf "Failure\nTemporary directory left: %s\n" $tmpdir
+  printf "Failure\nTemporary directory left: %s\n" "$tmpdir"
   exit 2
 )
 }
@@ -343,17 +349,17 @@ function mini {
 # Absolute paths to input folder and output DjVu files
 fld="`pwd`/$1"
 djvu="`pwd`/$1.djvu"
-if [ $tmp -eq 0 ]; then
+if [ "$tmp" -eq 0 ]; then
    tmpdirprefix="/tmp"
 else
    tmpdirprefix=`pwd`
 fi
 
 ### START!
-pgcount=`ls -1p $fld | egrep -v '/$' | wc -l`
+pgcount=`ls -1p "$fld" | egrep -v '/$' | wc -l`
 printf "$pgcount files:\n"
-if [ $usemini -lt 1 ] ; then
-   tmpdir=`mktemp -d $tmpdirprefix/pagesXXXXX`
+if [ "$usemini" -lt 1 ] ; then
+   tmpdir=`mktemp -d "$tmpdirprefix"/pagesXXXXX`
    nomini
 else
    if ! which minidjvu >/dev/null ; then
@@ -361,6 +367,6 @@ else
       usage
       exit 1
    fi
-   tmpdir=`mktemp -d $tmpdirprefix/pagesXXXXX`
+   tmpdir=`mktemp -d "$tmpdirprefix"/pagesXXXXX`
    mini
 fi
