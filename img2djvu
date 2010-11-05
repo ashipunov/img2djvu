@@ -1,6 +1,6 @@
 #!/bin/bash
 
-### Version 1.9
+### Version 1.10
 ### Inspired by script pdf-trim-to-djvu.sh (http://gist.github.com/315791)
 ### PUBLIC DOMAIN
 
@@ -164,7 +164,7 @@ fi
 
 ### Black and white
 function cjb2coder {
-   cjb2 "$cjb2opt" -dpi "$DPI" "$1" "$2"
+   cjb2 $cjb2opt -dpi "$DPI" "$1" "$2"
    # This function does not print because it is called also from inside codjvucoder
 }
 
@@ -180,16 +180,16 @@ function minidjvucoder {
 
 ### Color
 function cpaldjvucoder {
-   cpaldjvu "$cpaldjvuopt" -dpi "$DPI" "$1" "$2"
+   cpaldjvu $cpaldjvuopt -dpi "$DPI" "$1" "$2"
    printf "F"
 }
 
 function c44coder {
-   c44 "$c44opt" -dpi "$DPI" "$1" "$2"
+   c44 $c44opt -dpi "$DPI" "$1" "$2"
    printf "C"
 }
 
-# Layer separation adn forced segmentation coder
+# Layer separation and "forced segmentation" coder
 function codjvucoder {
    # folders
    printf "L"
@@ -198,12 +198,12 @@ function codjvucoder {
    # image parameters
    newsize=`identify -format "%[fx:ceil(w/$usecodjvu)]x%[fx:ceil(h/$usecodjvu)]" "$1"`
    # separate layers from Scan Tailor
-   convert "$1" -threshold 1 "$tmcdir"/fore.pbm
-   convert "$1" -fill white -opaque black "$usepro" -resize "$newsize"\! "$tmcdir"/back.ppm
+   convert "$1" -threshold 1 $tmcdir/fore.pbm
+   convert "$1" -fill white -opaque black $usepro -resize $newsize\! $tmcdir/back.ppm
    cd "$tmcdir"
    printf ":"
    # make BG44 chunk
-   c44 "$c44opt" -dpi "$DPI" back.ppm back.djvu
+   c44 $c44opt -dpi "$DPI" back.ppm back.djvu
    djvuextract back.djvu BG44=bg44.cnk >/dev/null 2>&1
    printf "1"
    # make Sjbz chunk
@@ -212,7 +212,7 @@ function codjvucoder {
    printf "+1"
    if [ "$dv" -lt 3523 ] ; then
       # make FG44 chunk from background (!)
-      convert -size "$newsize"\! -depth 8 xc:black fore.pgm
+      convert -size $newsize\! -depth 8 xc:black fore.pgm
       c44 -dpi "$DPI" -slice 120 fore.pgm fore.djvu
       djvuextract fore.djvu BG44=fg44.cnk >/dev/null 2>&1
       # make compound DjVu
@@ -241,6 +241,7 @@ function nomini {
     SAVEIFS=$IFS
     IFS=$(echo -en "\n\b")
     for f in `ls -1p | egrep -v '/$'` ; do
+    IFS=$SAVEIFS
       of="$tmpdir/${f%.*}.pnm"
       convert "$fld/$f" "$of" 2>/dev/null
       convertfailed=$?
@@ -268,6 +269,7 @@ function nomini {
       ) && \
       rm "$of" && \
       printf "$age"
+      IFS=$(echo -en "\n\b")
     done
     IFS=$SAVEIFS
   ) &&
@@ -293,6 +295,7 @@ function mini {
     SAVEIFS=$IFS
     IFS=$(echo -en "\n\b")
     for f in `ls -1p | egrep -v '/$'` ; do
+    IFS=$SAVEIFS
       pgcount=$((pgcount-1))
       of="$tmpdir/${f%.*}.pnm"
       convert "$fld/$f" "$of" 2>/dev/null
@@ -303,7 +306,7 @@ function mini {
       fi
       if [ `identify -format "%z" "$of"` -gt 1 ] ; then
          if [ "$bwcount" -gt 0 ] ; then
-            minidjvucoder `echo "$bwpages"` "${of%pnm}1.djvu"
+            minidjvucoder `echo "$bwpages"` ${of%pnm}1.djvu
             bwpages=""
             bwcount=0
             printf "$age"
@@ -330,6 +333,7 @@ function mini {
             bwcount=0
             printf "$age"
          fi
+      IFS=$(echo -en "\n\b")
     done
     IFS=$SAVEIFS
   ) &&
@@ -364,6 +368,11 @@ if [ "$usemini" -lt 1 ] ; then
 else
    if ! which minidjvu >/dev/null ; then
       printf "\nFor -m option, minidjvu is required.\n\n"
+      usage
+      exit 1
+   fi
+   if ls -1p "$fld" | grep " " ; then
+      printf "\nSome file names contain spaces, minidjvu will not run!\n\n"
       usage
       exit 1
    fi
