@@ -1,6 +1,5 @@
 #!/bin/bash
 
-### Version 1.10
 ### Inspired by script pdf-trim-to-djvu.sh (http://gist.github.com/315791)
 ### PUBLIC DOMAIN
 
@@ -16,6 +15,7 @@ ocrengine=""
 ocrlanguage=""
 verbmini=0
 tmp=0
+ocrjobs=1
 # internal
 prog="$0"
 dpidefault="$DPI"
@@ -28,10 +28,12 @@ ocrenginedefault="$ocrengine"
 ocrlanguagedefault="$ocrlanguage"
 verbminidefault="$verbmini"
 tmpdefault="$tmp"
+ocrjobsdefault="$ocrjobs"
 
 function usage() {
   me=`basename "$prog"`
   cat << END
+img2djvu version 1.11
 Usage: "$me" [options] relative_folder_name
 
 Options:
@@ -39,6 +41,7 @@ Options:
  -c <0|1>   make a choice of temporary directory, 0 for /tmp, 1 for current [default: "$tmpdefault"]
  -d <int>   resolution in DPI [default: "$dpidefault"]
  -e "str"   if not empty, use OCR engine (supported by ocrodjvu) with this name [default: "$ocrenginedefault"]
+ -j <int>   number of OCR jobs [default: "$ocrjobsdefault"]
  -l <int>   if not 0, will use forced segmentation (with <int> downsampling) [default: "$codefault"]
  -m <int>   if not 0, will use minidjvu (with <int> dictionary size) instead of cjb2 [default: "$midefault"]
  -r "str"   if not empty, use OCR engine with given language [default: "$ocrlanguagedefault"]
@@ -50,7 +53,7 @@ Options:
 END
 }
 
-opts=`getopt -l "help" "a:c:d:e:h:f:l:m:p:r:t:v:" "$@"` && eval set -- "$opts"
+opts=`getopt -l "help" "a:c:d:e:h:f:j:l:m:p:r:t:v:" "$@"` && eval set -- "$opts"
 while true ; do
   case "$1" in
     -h|--help) usage ; exit 0 ;;
@@ -58,6 +61,7 @@ while true ; do
     -c) tmp="$2" ; shift 2 ;;
     -d) DPI="$2" ; shift 2 ;;
     -e) ocrengine="$2"; shift 2 ;;
+    -j) ocrjobs="$2"; shift 2 ;;
     -l) usecodjvu="$2" ; shift 2 ;;
     -m) usemini="$2" ; shift 2 ;;
     -r) ocrlanguage="$2" ; shift 2 ;;
@@ -278,7 +282,7 @@ function nomini {
   printf "\nDone.\n" && \
   if [ "$useocr" -gt 0 ] ; then
      printf "Starting OCR...\n"
-     ocrodjvu --engine "$ocrengine" --language "$ocrlanguage" --in-place --on-error=resume "$djvu"
+     ocrodjvu --engine "$ocrengine" --language "$ocrlanguage" --jobs "$ocrjobs" --in-place --on-error=resume "$djvu"
   fi
 ) && rm -rf "$tmpdir" || (
   printf "Failure\nTemporary directory left: %s\n" "$tmpdir"
@@ -342,7 +346,7 @@ function mini {
   printf "\nDone.\n" && \
   if [ "$useocr" -gt 0 ] ; then
      printf "Starting OCR...\n"
-     ocrodjvu --engine "$ocrengine" --language "$ocrlanguage" --in-place --on-error=resume "$djvu"
+     ocrodjvu --engine "$ocrengine" --language "$ocrlanguage" --jobs "$ocrjobs" --in-place --on-error=resume "$djvu"
   fi
 ) && rm -rf "$tmpdir" || (
   printf "Failure\nTemporary directory left: %s\n" "$tmpdir"

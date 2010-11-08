@@ -1,4 +1,4 @@
-Make minidjvu accept filenames with spaces
+Make minidjvu accept filenames with spaces, probablly sequentially rename files immediately after conversion
 
 (?) MMR and JPEG (ald also 2k?) chunks (with djvumake) instead of JB2 and IW44 for B&W and color pages, respectively
 
