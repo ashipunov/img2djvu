@@ -1,4 +1,6 @@
-1.11 Version number in default output; option for number of OCR jobs (thenks to Kyrill Detinov)
+1.12 Bug fixes: quotes with minidjvu and illegal options (thanks to Kyrill Detinov)
+
+1.11 Version number in default output; option for number of OCR jobs (thanks to Kyrill Detinov)
 
 1.10 Bug fixes: bugs introduced in previous version :)
 

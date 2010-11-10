@@ -33,7 +33,7 @@ ocrjobsdefault="$ocrjobs"
 function usage() {
   me=`basename "$prog"`
   cat << END
-img2djvu version 1.11
+img2djvu version 1.12
 Usage: "$me" [options] relative_folder_name
 
 Options:
@@ -69,6 +69,7 @@ while true ; do
     -t) treshold="$2" ; shift 2 ;;
     -v) verbmini="$2" ; shift 2 ;;
     --) shift ; break ;;
+    -*) break ;;
   esac
 done
 
@@ -174,9 +175,9 @@ function cjb2coder {
 
 function minidjvucoder {
    if [ "$verbmini" -gt 0 ] ; then
-      minidjvu -d "$DPI" -p "$usemini" "$minidjvuopt" -v $@
+      minidjvu -d "$DPI" -p "$usemini" $minidjvuopt -v $@
    else
-      minidjvu -d "$DPI" -p "$usemini" "$minidjvuopt" $@
+      minidjvu -d "$DPI" -p "$usemini" $minidjvuopt $@
    fi
    printf "$ags""M:"
    printf "$bwcount"
