@@ -1,3 +1,5 @@
+1.13 Option -V for version, minor optimizations (thanks to Kyrill Detinov)
+
 1.12 Bug fixes: quotes with minidjvu and illegal options (thanks to Kyrill Detinov)
 
 1.11 Version number in default output; option for number of OCR jobs (thanks to Kyrill Detinov)

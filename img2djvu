@@ -30,10 +30,13 @@ verbminidefault="$verbmini"
 tmpdefault="$tmp"
 ocrjobsdefault="$ocrjobs"
 
+function printversion() {
+printf "img2djvu version 1.13\n"
+}
+
 function usage() {
   me=`basename "$prog"`
   cat << END
-img2djvu version 1.12
 Usage: "$me" [options] relative_folder_name
 
 Options:
@@ -49,14 +52,13 @@ Options:
  -t <int>   if not 0, will use cpaldjvu for all images with number of colors less than <int> [default: "$trdefault"]
  -v <0|1>   if not 0, minidjvu run will be verbose [default: "$verbminidefault"]
  -h|--help  print this message
-
+ -V         print version and exit
 END
 }
 
-opts=`getopt -l "help" "a:c:d:e:h:f:j:l:m:p:r:t:v:" "$@"` && eval set -- "$opts"
+opts=`getopt -l "help" "a:c:d:e:f:j:l:m:p:r:t:v:hV" "$@"` && eval set -- "$opts"
 while true ; do
   case "$1" in
-    -h|--help) usage ; exit 0 ;;
     -a) ag="$2" ; shift 2 ;;
     -c) tmp="$2" ; shift 2 ;;
     -d) DPI="$2" ; shift 2 ;;
@@ -68,6 +70,8 @@ while true ; do
     -p) usepro="$2" ; shift 2 ;;
     -t) treshold="$2" ; shift 2 ;;
     -v) verbmini="$2" ; shift 2 ;;
+    -h|--help) usage ; exit 0 ;;
+    -V) printversion ; exit 0 ;;
     --) shift ; break ;;
     -*) break ;;
   esac
@@ -311,7 +315,7 @@ function mini {
       fi
       if [ `identify -format "%z" "$of"` -gt 1 ] ; then
          if [ "$bwcount" -gt 0 ] ; then
-            minidjvucoder `echo "$bwpages"` ${of%pnm}1.djvu
+            minidjvucoder "$bwpages" ${of%pnm}1.djvu
             bwpages=""
             bwcount=0
             printf "$age"
@@ -333,7 +337,7 @@ function mini {
          bwcount=$((bwcount+1))
       fi
          if [[ "$pgcount" -eq 0 && "$bwcount" -gt 0 ]] ; then 
-            minidjvucoder `echo "$bwpages"` "${of%pnm}1.djvu"
+            minidjvucoder "$bwpages" "${of%pnm}1.djvu"
             bwpages=""
             bwcount=0
             printf "$age"
