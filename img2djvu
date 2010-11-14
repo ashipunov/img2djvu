@@ -207,8 +207,8 @@ function codjvucoder {
    # image parameters
    newsize=`identify -format "%[fx:ceil(w/$usecodjvu)]x%[fx:ceil(h/$usecodjvu)]" "$1"`
    # separate layers from Scan Tailor
-   convert "$1" -threshold 1 $tmcdir/fore.pbm
-   convert "$1" -fill white -opaque black $usepro -resize $newsize\! $tmcdir/back.ppm
+   convert "$1" -threshold 1 "$tmcdir/fore.pbm"
+   convert "$1" -fill white -opaque black $usepro -resize $newsize\! "$tmcdir/back.ppm"
    cd "$tmcdir"
    printf ":"
    # make BG44 chunk
@@ -315,7 +315,7 @@ function mini {
       fi
       if [ `identify -format "%z" "$of"` -gt 1 ] ; then
          if [ "$bwcount" -gt 0 ] ; then
-            minidjvucoder "$bwpages" ${of%pnm}1.djvu
+            minidjvucoder "$bwpages" "${of%pnm}1.djvu"
             bwpages=""
             bwcount=0
             printf "$age"
@@ -381,9 +381,14 @@ else
       exit 1
    fi
    if ls -1p "$fld" | grep " " ; then
-      printf "\nSome file names contain spaces, minidjvu will not run!\n\n"
-      usage
+      printf "\nSome file names contain spaces, minidjvu will not run!\n"
       exit 1
+   fi
+   if [ "$tmp" -eq 1 ] ; then
+      if echo "$fld" | grep " " ; then
+         printf "\nPath to temporary directory contain spaces, minidjvu will not run!\n"
+         exit 1
+      fi
    fi
    tmpdir=`mktemp -d "$tmpdirprefix"/pagesXXXXX`
    mini

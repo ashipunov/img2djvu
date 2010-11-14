@@ -1,3 +1,5 @@
+1.14 Bug fixes: codjvu function did no work with names contain spaces; mini function not exits if name of temp dir contains spaces (thanks to Kyrill Detinov)
+
 1.13 Option -V for version, minor optimizations (thanks to Kyrill Detinov)
 
 1.12 Bug fixes: quotes with minidjvu and illegal options (thanks to Kyrill Detinov)
