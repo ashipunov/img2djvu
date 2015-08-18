@@ -283,7 +283,8 @@ function nomini {
     IFS=$SAVEIFS
   ) &&
   cd "$tmpdir" && \
-  djvm -c "$djvu" *.djvu && \
+  djvm -c merged.djvu *.djvu && \
+  mv merged.djvu "$djvu" && \
   printf "\nDone.\n" && \
   if [ "$useocr" -gt 0 ] ; then
      printf "Starting OCR...\n"
@@ -361,7 +362,8 @@ function mini {
 
 # Absolute paths to input folder and output DjVu files
 fld="`pwd`/$1"
-djvu="`pwd`/$1.djvu"
+# Remove the trailing slash.
+djvu="`pwd`/`echo $1 | perl -pe 's|/$||g'`.djvu"
 if [ "$tmp" -eq 0 ]; then
    tmpdirprefix="/tmp"
 else
