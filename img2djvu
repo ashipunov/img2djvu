@@ -31,7 +31,7 @@ tmpdefault="$tmp"
 ocrjobsdefault="$ocrjobs"
 
 function printversion() {
-printf "img2djvu version 1.13\n"
+printf "img2djvu version 20151127\n"
 }
 
 function usage() {
@@ -283,7 +283,8 @@ function nomini {
     IFS=$SAVEIFS
   ) &&
   cd "$tmpdir" && \
-  djvm -c "$djvu" *.djvu && \
+  djvm -c merged.djvu *.djvu && \
+  mv merged.djvu "$djvu" && \
   printf "\nDone.\n" && \
   if [ "$useocr" -gt 0 ] ; then
      printf "Starting OCR...\n"
@@ -297,6 +298,7 @@ function nomini {
 
 ### Minidjvu-based coder and bundler
 # Similar to previous, but instead of cjb2 minidjvu called every time when black and white sequence interrupted with color image, or when sequence ends on black and white file
+# Works with sequences, therefore visually less verbose, minidjvu is also slower than cjb2
 function mini {
 ( cd "$fld" &&
   ( bwcount=0 && \
@@ -316,6 +318,7 @@ function mini {
       if [ `identify -format "%z" "$of"` -gt 1 ] ; then
          if [ "$bwcount" -gt 0 ] ; then
             minidjvucoder "$bwpages" "${of%pnm}1.djvu"
+            rm -f $bwpages
             bwpages=""
             bwcount=0
             printf "$age"
@@ -331,13 +334,15 @@ function mini {
          else
             colorcoder "$of" "${of%pnm}2.djvu"
          fi
+         rm "$of" && \
          printf "$age"
       else
          bwpages="$bwpages $of"
          bwcount=$((bwcount+1))
       fi
-         if [[ "$pgcount" -eq 0 && "$bwcount" -gt 0 ]] ; then 
+         if [[ "$pgcount" -eq 0 && "$bwcount" -gt 0 ]] ; then
             minidjvucoder "$bwpages" "${of%pnm}1.djvu"
+            rm -f $bwpages
             bwpages=""
             bwcount=0
             printf "$age"
@@ -361,7 +366,7 @@ function mini {
 
 # Absolute paths to input folder and output DjVu files
 fld="`pwd`/$1"
-djvu="`pwd`/$1.djvu"
+djvu="`pwd`/`echo $1 | sed -e 's|/$||g'`.djvu"
 if [ "$tmp" -eq 0 ]; then
    tmpdirprefix="/tmp"
 else
@@ -372,7 +377,7 @@ fi
 pgcount=`ls -1p "$fld" | egrep -v '/$' | wc -l`
 printf "$pgcount files:\n"
 if [ "$usemini" -lt 1 ] ; then
-   tmpdir=`mktemp -d "$tmpdirprefix"/pagesXXXXX`
+   tmpdir=`mktemp -d "$tmpdirprefix"/pagesXXXXXX`
    nomini
 else
    if ! which minidjvu >/dev/null ; then
@@ -390,6 +395,6 @@ else
          exit 1
       fi
    fi
-   tmpdir=`mktemp -d "$tmpdirprefix"/pagesXXXXX`
+   tmpdir=`mktemp -d "$tmpdirprefix"/pagesXXXXXX`
    mini
 fi

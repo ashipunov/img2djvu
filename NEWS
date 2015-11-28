@@ -1,3 +1,6 @@
+20151127 Now minidjvu coder part removes temporary pnm files right after encoding and therefore saves much more space
+20151125 Pull requests' improvements: name of temp dir is 'pagesXXXXXX' now; djvu created in the temp folder; possible trailing slash removed from the folder name 
+
 1.14 Bug fixes: codjvu function did no work with names contain spaces; mini function not exits if name of temp dir contains spaces (thanks to Kyrill Detinov)
 
 1.13 Option -V for version, minor optimizations (thanks to Kyrill Detinov)

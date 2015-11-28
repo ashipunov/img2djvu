@@ -1,5 +1,2 @@
+Make an option to avoid layer separation for the selected pages?
 Make minidjvu accept filenames with spaces, probablly sequentially rename files immediately after conversion
-
-(?) MMR and JPEG (ald also 2k?) chunks (with djvumake) instead of JB2 and IW44 for B&W and color pages, respectively
-
-(?) New {twopass} function for cases when minidjvu dictionary broken with color files: extract color chunks, keep them under name <page_num>.iw44, extract bw parts, remember their names in $bwpages, when <F> or end, start minidjvu, make multi-paged, then add color chunks to pages with <page_number> OR do it for ALL pages (and somehow insert <F> pages at the end)

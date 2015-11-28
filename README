@@ -18,7 +18,7 @@ ADVANCED USE
 
 > img2djvu -d 600 out
 
-Will change default resolution (300 dpi) to 600 dpi
+Will set resolution to 600 dpi (default is 300 dpi)
 
 > img2djvu -t 17 out
 
@@ -30,17 +30,17 @@ Will skip ImageMagick color count (this is much faster!) and send all color file
 
 > img2djvu -m 10 out
 
-For black and white pages, will employ minidjvu DjVu coder (with 10 pages per dictionary) instead of default cjb2 coder
+For black and white pages, will use minidjvu DjVu coder (with 10 pages per dictionary) instead of default cjb2 coder
 
 > img2djvu -l 1 out
 
-For color pages, img2djvu will do layer separation*** (assuming that the file is the result of Scan Tailor* mixed mode output**), then blur color part and start forced segmentation****; it is slow but usually produce compact output.
+For color pages, img2djvu will perform layer separation*** (assuming that the file is the result of Scan Tailor* mixed mode output**), then blur color part and start forced segmentation****; it is slow but usually produce compact output.
 
 ===
 
 *    Scan Tailor: http://scantailor.sourceforge.net/
 
-**   Mixed mode outputs image colors in [1...254] rank and text colors as pure black [0]
+**   Mixed mode outputs image colors in [1...254] rank whereas text is pure black [0] and page background is pure white [255]
 
 ***  Layer separation after Scan Tailor: http://forum.ru-board.com/topic.cgi?forum=5&topic=32945 (in Russian), http://alexrey036.narod.ru/LayerTailor/LayerTailor.zip
 
@@ -60,7 +60,7 @@ Will NOT use blur and contrast for processing color layers
 
 > img2djvu -l 1 -r rus -e cuneiform -j 2 -a 1 out
 
-After creation of final DjVu, will run two OCR jobs of cuneiform with "-rus" language option via ocrodjvu and insert text layer in place
+After creation of the final DjVu, will run two OCR jobs of cuneiform with "-rus" language option via ocrodjvu and insert text layer in place
 
 > img2djvu -c 1 out
 
@@ -74,6 +74,6 @@ Absolute paths are not allowed
 
 It is expected that all images inside a folder have the same resolution
 
-Image names are very important; they determine the page sequence in future DjVu file. It is strongly recommended to rename files sequentially before im2djvu run
+Folder and image names are very important; they, for example, determine the page sequence in future DjVu file. It is strongly recommended to rename files sequentially before im2djvu run. Also, please avoid using anything except [0-9a-z_-] in the file and folder names. No spaces and non-ASCII letters, please!
 
-It is NOT expected that layer separation and forced segmentation will harm non-Scan Tailor files
+It is NOT recommended to use -l option with files which did not come from Scan Tailor output
