@@ -252,7 +252,18 @@ function nomini {
     for f in `ls -1p | egrep -v '/$'` ; do
     IFS=$SAVEIFS
       of="$tmpdir/${f%.*}.pnm"
-      convert "$fld/$f" "$of" 2>/dev/null
+      if which tifftopnm >/dev/null ; then
+	      tifftopnm_cmd=1
+      fi
+      if [[ "$fld/$f" =~ .*\.(tif|tiff) ]] ; then # Use `tifftopnm` for TIFFs, if installed (it is faster / uses less memory).
+	      if [ $tifftopnm_cmd = 1 ] ; then
+		      tifftopnm "$fld/$f" > "$of" 2>/dev/null
+	      else
+		      convert "$fld/$f" "$of" 2>/dev/null
+	      fi
+      else # for all other images (JPEG etc), use `convert` :
+	      convert "$fld/$f" "$of" 2>/dev/null
+      fi
       convertfailed=$?
       if [ "$convertfailed" -eq 1 ] ; then
          printf "."
@@ -309,7 +320,18 @@ function mini {
     IFS=$SAVEIFS
       pgcount=$((pgcount-1))
       of="$tmpdir/${f%.*}.pnm"
-      convert "$fld/$f" "$of" 2>/dev/null
+      if which tifftopnm >/dev/null ; then
+	      tifftopnm_cmd=1
+      fi
+      if [[ "$fld/$f" =~ .*\.(tif|tiff) ]] ; then # Use `tifftopnm` for TIFFs, if installed (it is faster / uses less memory).
+	      if [ $tifftopnm_cmd = 1 ] ; then
+		      tifftopnm "$fld/$f" > "$of" 2>/dev/null
+	      else
+		      convert "$fld/$f" "$of" 2>/dev/null
+	      fi
+      else # for all other images (JPEG etc), use `convert` :
+	      convert "$fld/$f" "$of" 2>/dev/null
+      fi
       convertfailed=$?
       if [ "$convertfailed" -eq 1 ] ; then
          printf "."
