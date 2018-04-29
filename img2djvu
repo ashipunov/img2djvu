@@ -31,7 +31,7 @@ tmpdefault="$tmp"
 ocrjobsdefault="$ocrjobs"
 
 function printversion() {
-printf "img2djvu version 20151127\n"
+printf "img2djvu version 20180429\n"
 }
 
 function usage() {
