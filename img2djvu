@@ -6,7 +6,7 @@
 ### Settings
 # default
 DPI=300
-treshold=129
+threshold=129
 usemini=0
 usecodjvu=0
 ag=0
@@ -19,7 +19,7 @@ ocrjobs=1
 # internal
 prog="$0"
 dpidefault="$DPI"
-trdefault="$treshold"
+trdefault="$threshold"
 midefault="$usemini"
 codefault="$usecodjvu"
 agdefault="$ag"
@@ -48,7 +48,7 @@ Options:
  -l <int>   if not 0, will use forced segmentation (with <int> downsampling) [default: "$codefault"]
  -m <int>   if not 0, will use minidjvu (with <int> dictionary size) instead of cjb2 [default: "$midefault"]
  -r "str"   if not empty, use OCR engine with given language [default: "$ocrlanguagedefault"]
- -p "str"   process color layer with given ImageMagick options [default: "$prodefault"]
+ -p "str"   process color layer with given GraphicsMagick options [default: "$prodefault"]
  -t <int>   if not 0, will use cpaldjvu for all images with number of colors less than <int> [default: "$trdefault"]
  -v <0|1>   if not 0, minidjvu run will be verbose [default: "$verbminidefault"]
  -h|--help  print this message
@@ -68,7 +68,7 @@ while true ; do
     -m) usemini="$2" ; shift 2 ;;
     -r) ocrlanguage="$2" ; shift 2 ;;
     -p) usepro="$2" ; shift 2 ;;
-    -t) treshold="$2" ; shift 2 ;;
+    -t) threshold="$2" ; shift 2 ;;
     -v) verbmini="$2" ; shift 2 ;;
     -h|--help) usage ; exit 0 ;;
     -V) printversion ; exit 0 ;;
@@ -105,10 +105,12 @@ else
    dv=`cpaldjvu 2>&1| sed -e '2,$d' -e 's/^.*-\([1-9.]*\)$/\1/' -e 's/\.//g'`
 fi
 
-if ! which identify >/dev/null ; then
-   printf "\nImageMagick should be installed.\n\n"
-   usage
-   exit 1
+if which gm >/dev/null ; then
+	gm=`which gm`
+else
+	printf "\nGraphicsMagick should be installed.\n\n"
+	usage
+	exit 1
 fi
 
 if ! [[ -n "$ocrengine" && -n "$ocrlanguage" ]] ; then
@@ -205,10 +207,10 @@ function codjvucoder {
    tmcdir="$tmpdir"/tmp
    mkdir "$tmcdir"
    # image parameters
-   newsize=`identify -format "%[fx:ceil(w/$usecodjvu)]x%[fx:ceil(h/$usecodjvu)]" "$1"`
+   newsize=`"${gm}" identify -format "%[fx:ceil(w/$usecodjvu)]x%[fx:ceil(h/$usecodjvu)]" "$1"`
    # separate layers from Scan Tailor
-   convert "$1" -threshold 1 "$tmcdir/fore.pbm"
-   convert "$1" -fill white -opaque black $usepro -resize $newsize\! "$tmcdir/back.ppm"
+   "${gm}" convert "$1" -threshold 1 "$tmcdir/fore.pbm"
+   "${gm}" convert "$1" -fill white -opaque black $usepro -resize $newsize\! "$tmcdir/back.ppm"
    cd "$tmcdir"
    printf ":"
    # make BG44 chunk
@@ -221,7 +223,7 @@ function codjvucoder {
    printf "+1"
    if [ "$dv" -lt 3523 ] ; then
       # make FG44 chunk from background (!)
-      convert -size $newsize\! -depth 8 xc:black fore.pgm
+      "${gm}" convert -size $newsize\! -depth 8 xc:black fore.pgm
       c44 -dpi "$DPI" -slice 120 fore.pgm fore.djvu
       djvuextract fore.djvu BG44=fg44.cnk >/dev/null 2>&1
       # make compound DjVu
@@ -236,10 +238,10 @@ function codjvucoder {
 }
 
 ### General coder and bundler
-# convert all pages to pnm: convert
+# convert all pages to pnm: "${gm}" convert
 # determine color depth of each page
 # if depth <= 1, compress with cjb2 or minidjvu
-# if depth > 1 and treshold > 0, count number of unique colors
+# if depth > 1 and threshold > 0, count number of unique colors
 # if unique colors < 129, compress with cpaldjvu
 # if unique colors >= 129, compress with c44 or codjvu
 # display progress symbols (B or M for Bitonal, C for TrueColor, L for codjvu layers, F for Palette)
@@ -252,18 +254,19 @@ function nomini {
     for f in `ls -1p | egrep -v '/$'` ; do
     IFS=$SAVEIFS
       of="$tmpdir/${f%.*}.pnm"
-      convert "$fld/$f" "$of" 2>/dev/null
+      "${gm}" convert "$fld/$f" "$of" 2>/dev/null
       convertfailed=$?
       if [ "$convertfailed" -eq 1 ] ; then
-         printf "."
-         continue
+	      printf "."
+	      continue
       fi
       printf "$ags" && \
       ( # switch between formats
-        if [ `identify -format "%z" "$of"` -gt 1 ] ; then
-           if [ "$treshold" -gt 0 ] ; then
-              colors=`identify -format "%k" "$of"` && \
-              if [ "$colors" -lt "$treshold" ] ; then
+#        if [ `"${gm}" identify -format "%z" "$of"` -gt 1 ] ; then #Imagemagick's identify -format '%z' is the same as `gm identify -format '%q'`
+        if [ `"${gm}" identify -format "%q" "$of"` -gt 1 ] ; then
+           if [ "$threshold" -gt 0 ] ; then
+              colors=`"${gm}" identify -format "%k" "$of"` && \
+              if [ "$colors" -lt "$threshold" ] ; then
                  cpaldjvucoder "$of" "${of%pnm}djvu"
               else
                  colorcoder "$of" "${of%pnm}djvu"
@@ -309,13 +312,14 @@ function mini {
     IFS=$SAVEIFS
       pgcount=$((pgcount-1))
       of="$tmpdir/${f%.*}.pnm"
-      convert "$fld/$f" "$of" 2>/dev/null
+      "${gm}" convert "$fld/$f" "$of" 2>/dev/null
       convertfailed=$?
       if [ "$convertfailed" -eq 1 ] ; then
          printf "."
          continue
       fi
-      if [ `identify -format "%z" "$of"` -gt 1 ] ; then
+#      if [ `"${gm}" identify -format "%z" "$of"` -gt 1 ] ; then
+      if [ `"${gm}" identify -format "%z" "$of"` -gt 1 ] ; then
          if [ "$bwcount" -gt 0 ] ; then
             minidjvucoder "$bwpages" "${of%pnm}1.djvu"
             rm -f $bwpages
@@ -324,9 +328,9 @@ function mini {
             printf "$age"
          fi
          printf "$ags"
-         if [ "$treshold" -gt 0 ] ; then
-            colors=`identify -format "%k" "$of"`
-            if [ "$colors" -lt "$treshold" ] ; then
+         if [ "$threshold" -gt 0 ] ; then
+            colors=`"${gm}" identify -format "%k" "$of"`
+            if [ "$colors" -lt "$threshold" ] ; then
                cpaldjvucoder "$of" "${of%pnm}2.djvu"
             else
                colorcoder "$of" "${of%pnm}2.djvu"
