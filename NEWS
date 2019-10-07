@@ -1,42 +1,18 @@
-20151127 Now minidjvu coder part removes temporary pnm files right after encoding and therefore saves much more space
-20151125 Pull requests' improvements: name of temp dir is 'pagesXXXXXX' now; djvu created in the temp folder; possible trailing slash removed from the folder name 
+djvupages 20191007:
+ README and TODO updated
 
-1.14 Bug fixes: codjvu function did no work with names contain spaces; mini function not exits if name of temp dir contains spaces (thanks to Kyrill Detinov)
+djvupages 20151125:
+ ddjvu makes now TIFF everywhere, not PNM
 
-1.13 Option -V for version, minor optimizations (thanks to Kyrill Detinov)
+djvupages 20151124:
+ GIMP option now uses img2djvu without segmentation and -p sub-option for page number; new -c oprion to filter pages with ImageMagick 'convert'
 
-1.12 Bug fixes: quotes with minidjvu and illegal options (thanks to Kyrill Detinov)
+djvupages 0.92:
+ Exit with wrong option, print version name
 
-1.11 Version number in default output; option for number of OCR jobs (thanks to Kyrill Detinov)
+djvupages:
+ 0.91 Calculation of DPI for --gimp option
 
-1.10 Bug fixes: bugs introduced in previous version :)
+djvupages 0.9:
+  First public release with six modes
 
-1.9 Bug fix: filenames with spaces (thanks to Kyrill Detinov)
-
-1.8 Bug fix: /tmp was not default (thanks to Kyrill Detinov)
-
-1.7 Choice of temporary folder (thanks to Kyrill Detinov)
-
-1.6 Does not use double extensions (thanks to Kyrill Detinov)
-
-1.5 Subfolders are ingnored, additional check for absolute paths which are not allowed
-
-1.4 OCR for all pages via ocrodjvu, language AND engine could be specified (new option -e)
-
-1.3 Added DPI for c44 coder amd makedjvu (inside codjvu function)
-
-1.2 Removed useless Group4 conversion option (thanks to anagnost96), added verbosity option specific for minidjvu
-
-1.1 Removed call to composite -- speed increased by 20%, thanks to U235; added some output (number of files and skipped files)
-
-1.0 Background color layer now downsampled; if DjVuLibre version > 3.5.32, uses FGbz chunk instead of FG44; image processing is now controlled with -p option; OCR via ocrodjvu/hocr2djvused + cuneiform is possible
-
-0.9d Two bugs fixed: (1) lost path after minidjvu processing and (2) pgcount should decrease before breaking cycle if convert did not work
-
-0.9c minidjvu --agression 200 for -a 2; ignoring non-graphic files
-
-0.9b Functions cleanup
-
-0.9a Checks for existence of folder and subfolders added, better README
-
-0.9 Checks for ImageMagick, Djvu Libre and minidjvu (with -m option) added
