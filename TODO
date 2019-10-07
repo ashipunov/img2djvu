@@ -1,14 +1,16 @@
-Make an option to avoid layer separation for the selected pages?
+Make an option to avoid layer separation for some pages?
 
-Make minidjvu accept filenames with spaces, probablly sequentially rename files immediately after conversion
+Make minidjvu accept filenames with spaces, probablly sequentially rename
+files immediately after conversion
 
-Use graphicsmagick instead of imagemagick as an _option_
-
-Mention that GNU getopt is required
+Use graphicsmagick instead of imagemagick as an _option_ (not as a
+replacements as in pool requests)
 
 Set compress options separtately for bw and color
 
-"Poor man multithread": utility like 'img2djvupmm' which
+Simplify: remove OCR
+
+"Poor Man Multithread": utility like 'img2djvupmm' which
  counts files,
  divides with excess with 't' as a result,
  adds excess to first number,
