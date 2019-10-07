@@ -1,21 +1,79 @@
-djvupages is a command-line djvu pages manipulator and editor wrapper.
-Script has three options for pages and several modes options. See --help
-for more information.
+This is a single-pass DjVu encoder based on DjVu Libre and ImageMagick, optionally also minidjvu and ocrodjvu plus cuneiform
 
-djvupages depends on bash, getopt, seq, tac, mktemp, sed, DjVu Libre
-(djvm, djvused and ddjvu), (in case of --gimp mode) on GIMP and img2djvu
-and (in case of -c mode) on ImageMagick.
+img2djvu is in a public domain. Many thanks to members of forum.ru-board.com for ideas, suggestions and corrections, especially to U235, anagnost96 and monday2000.
 
-djvupages can delete multiple pages, split DjVu file (i.e., select one
-part of it), move several pages to different place, chop to individual
-DjVu files, extract selected pages as TIFF images, edit one page in file
-(through GIMP and img2djvu) and process pages with ImageMagick 'convert'
-command.
+===
 
-To merge DjVu files or insert one DjVu file into another, see 'man djvm'.
+SIMPLE USE
 
-Example:
+> img2djvu out
 
-$ djvupages -f 3 -l 5 --select file.djvu
+(where "out" is a name of folder wich contains some images)
 
-will select pages 3, 4, and 5 and place them into separate file
+img2djvu will output some diagnostics: first, total number of files in folder, then will show processing status of every file. Skipped non-graphic files are labeled with dots (.), graphic files are labeled with angle brackets (<>). Black and white pages are labeled with B or M (if minidjvu used), color pages with C, F (if cpaldjvu used) or L (if layer separation used). OCR labeled as an additional layer (+1) or additional plus (+). Aggressivity is the number of enclosed brackets (e.g., <<<>>> for -a 2).
+
+===
+
+ADVANCED USE
+
+> img2djvu -d 600 out
+
+Will set resolution to 600 dpi (default is 300 dpi)
+
+> img2djvu -t 17 out
+
+Among color files, only files with color count < 17 will be sent to cpaldjvu DjVu coder
+
+> img2djvu -t 0 out
+
+Will skip ImageMagick color count (this is much faster!) and send all color files to c44 DjVu coder; cpaldjvu will not run
+
+> img2djvu -m 10 out
+
+For black and white pages, will use minidjvu DjVu coder (with 10 pages per dictionary) instead of default cjb2 coder
+
+> img2djvu -l 1 out
+
+For color pages, img2djvu will perform layer separation*** (assuming that the file is the result of Scan Tailor* mixed mode output**), then blur color part and start forced segmentation****; it is slow but usually produce compact output.
+
+===
+
+*    Scan Tailor: http://scantailor.sourceforge.net/
+
+**   Mixed mode outputs image colors in [1...254] rank whereas text is pure black [0] and page background is pure white [255]
+
+***  Layer separation after Scan Tailor: http://forum.ru-board.com/topic.cgi?forum=5&topic=32945 (in Russian), http://alexrey036.narod.ru/LayerTailor/LayerTailor.zip
+
+**** Forced segmentation: http://djvu-soft.narod.ru/scan/back_glue.htm (in Russian)
+
+> img2djvu -a 2 -m 20 out
+
+Will produce more compact output; however, check the result carefully---artifacts could appear!
+
+> img2djvu -l 4 out
+
+Will use four-fold downsampling for color layers; result will be extremely compact. Coefficient should be an integer between 1 and 12; best choices are 2, 3, or 4.
+
+> img2djvu -p "" out
+
+Will NOT use blur and contrast for processing color layers
+
+> img2djvu -l 1 -r rus -e cuneiform -j 2 -a 1 out
+
+After creation of the final DjVu, will run two OCR jobs of cuneiform with "-rus" language option via ocrodjvu and insert text layer in place
+
+> img2djvu -c 1 out
+
+Will create temporary files in current directory
+
+===
+
+CAVEATS
+
+Absolute paths are not allowed
+
+It is expected that all images inside a folder have the same resolution
+
+Folder and image names are very important; they, for example, determine the page sequence in future DjVu file. It is strongly recommended to rename files sequentially before im2djvu run. Also, please avoid using anything except [0-9a-z_-] in the file and folder names. No spaces and non-ASCII letters, please!
+
+It is NOT recommended to use -l option with files which did not come from Scan Tailor output

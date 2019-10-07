@@ -1,7 +1,19 @@
-Make option to deal with page dpi (via xml). At the moment, djvudpi
-utility (http://www.djvu-soft.narod.ru/soft/djvudpi.rar) does it.
+Make an option to avoid layer separation for the selected pages?
 
-Use graphicsmagick instead of imagemagick as an _option_ (not as a
-replacement as in pull requests to img2djvu)
+Make minidjvu accept filenames with spaces, probablly sequentially rename files immediately after conversion
 
-Option '--images': retain the internal file names?
+Use graphicsmagick instead of imagemagick as an _option_
+
+Mention that GNU getopt is required
+
+Set compress options separtately for bw and color
+
+"Poor man multithread": utility like 'img2djvupmm' which
+ counts files,
+ divides with excess with 't' as a result,
+ adds excess to first number,
+ makes t dirs,
+ symlinks to the first dir maximal number of files,
+ symlinks to others equal numbers of files,
+ runs 'img2djvu' simultaneously on each,
+ glues results
